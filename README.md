@@ -13,6 +13,11 @@ Two modes:
 The reading, note-taking and annotation all happen on paper. The app only picks
 the subject and runs the clock.
 
+**Live page:** https://claude.ai/code/artifact/b6bdc9cf-860b-44f4-a357-964ee43bf47f
+
+Coming back to this after a while? Start with [NEXT-STEPS.md](NEXT-STEPS.md) —
+current state, what's unverified, known limits and the backlog.
+
 ## Running it
 
 It's a static page. Open `index.html` in a browser, or serve the folder:
