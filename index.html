@@ -1,0 +1,627 @@
+<title>Cold Open</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=DM+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap">
+<style>
+:root{
+  --paper:#E6E5DC; --card:#F7F6F1; --ink:#191B1D; --ink-soft:#63676B;
+  --blue:#1C3E96; --on-blue:#FFFFFF; --flo:#E23C1E; --on-flo:#FFFFFF;
+  --rule:rgba(25,27,29,.17); --rule-firm:rgba(25,27,29,.34);
+  --ghost:rgba(28,62,150,.15); --chip:rgba(28,62,150,.09);
+  --ui:"Archivo",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --read:"Newsreader",Georgia,"Times New Roman",serif;
+  --mono:"DM Mono",ui-monospace,SFMono-Regular,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#101214; --card:#191C1F; --ink:#E9E8E2; --ink-soft:#9CA0A5;
+  --blue:#8FA8FF; --on-blue:#0E1013; --flo:#FF6D48; --on-flo:#1A0E09;
+  --rule:rgba(233,232,226,.17); --rule-firm:rgba(233,232,226,.32);
+  --ghost:rgba(143,168,255,.16); --chip:rgba(143,168,255,.13);
+}}
+:root[data-theme="dark"]{
+  --paper:#101214; --card:#191C1F; --ink:#E9E8E2; --ink-soft:#9CA0A5;
+  --blue:#8FA8FF; --on-blue:#0E1013; --flo:#FF6D48; --on-flo:#1A0E09;
+  --rule:rgba(233,232,226,.17); --rule-firm:rgba(233,232,226,.32);
+  --ghost:rgba(143,168,255,.16); --chip:rgba(143,168,255,.13);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--read);line-height:1.55;
+  margin:0;padding-block:28px 150px;padding-left:20px;padding-right:20px;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:780px;margin:0 auto}
+h1,h2{margin:0;text-wrap:balance}
+button{font-family:var(--ui);cursor:pointer;color:inherit}
+:focus-visible{outline:2px solid var(--flo);outline-offset:2px}
+
+.mast{display:flex;justify-content:space-between;align-items:baseline;gap:14px;
+  flex-wrap:wrap;border-bottom:2px solid var(--ink);padding-bottom:10px}
+.mark{font-family:var(--ui);font-weight:700;font-size:22px;letter-spacing:-.02em}
+.mark em{font-style:normal;color:var(--flo)}
+.tagline{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft)}
+
+.tabs{display:flex;margin-top:18px;border:1.5px solid var(--ink);width:fit-content;max-width:100%}
+.tab{background:none;border:0;padding:9px 17px;font-size:12.5px;font-weight:600;
+  letter-spacing:.06em;text-transform:uppercase;border-right:1.5px solid var(--ink)}
+.tab:last-child{border-right:0}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--paper)}
+
+.console{margin-top:20px;border:1px solid var(--rule-firm);background:var(--card);
+  padding:16px 18px;display:flex;flex-direction:column;gap:15px}
+.row{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
+.field{display:flex;flex-direction:column;gap:7px;min-width:0}
+.lbl{font-family:var(--ui);font-size:10.5px;font-weight:600;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-soft)}
+.seg{display:flex;border:1px solid var(--rule-firm);flex-wrap:wrap}
+.seg button{background:none;border:0;border-right:1px solid var(--rule-firm);
+  padding:7px 12px;font-size:12px;font-weight:500;white-space:nowrap}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--blue);color:var(--on-blue)}
+.mins{font-family:var(--mono);width:64px;padding:7px 8px;background:var(--paper);
+  color:var(--ink);border:1px solid var(--rule-firm);font-size:13px}
+.knownbtn{background:none;border:1px dashed var(--rule-firm);padding:7px 12px;
+  font-size:12px;font-weight:500;text-align:left}
+.hint{font-family:var(--mono);font-size:11px;color:var(--ink-soft);line-height:1.5;margin:10px 0 9px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{background:none;border:1px solid var(--rule-firm);padding:5px 11px;font-size:12px;
+  border-radius:999px;font-weight:500}
+.chip[aria-pressed="true"]{background:var(--chip);border-color:var(--blue);color:var(--blue)}
+
+.deal{margin-top:16px;width:100%;background:var(--ink);color:var(--paper);border:0;
+  padding:15px;font-size:14px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  display:flex;align-items:center;justify-content:center;gap:10px}
+.deal:hover{background:var(--blue);color:var(--on-blue)}
+.kbd{font-family:var(--mono);font-size:10px;letter-spacing:0;opacity:.65;
+  border:1px solid currentColor;padding:1px 5px;text-transform:none;font-weight:400}
+
+.card{margin-top:24px;background:var(--card);border:1px solid var(--ink);
+  padding:26px 24px 22px;box-shadow:5px 5px 0 var(--ghost)}
+@keyframes reg{from{box-shadow:12px 9px 0 var(--ghost);transform:translate(-4px,-3px)}
+  to{box-shadow:5px 5px 0 var(--ghost);transform:none}}
+.card.dealt{animation:reg .42s cubic-bezier(.2,.9,.3,1)}
+@media (prefers-reduced-motion:reduce){.card.dealt{animation:none}}
+.cardtop{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.stamp{display:inline-block;background:var(--flo);color:var(--on-flo);font-family:var(--ui);
+  font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;
+  padding:5px 11px;transform:rotate(-1.1deg)}
+.dom{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
+.title{font-family:var(--read);font-weight:600;font-size:clamp(26px,5.2vw,37px);
+  line-height:1.13;letter-spacing:-.015em;margin:16px 0 0}
+.deck{margin:13px 0 0;font-style:italic;font-size:17.5px;line-height:1.45;max-width:58ch}
+.meta{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);margin-top:10px;
+  font-variant-numeric:tabular-nums;line-height:1.55}
+.extract{margin:14px 0 0;font-size:16.5px;line-height:1.6;max-width:62ch}
+.angle{margin-top:20px;border-left:3px solid var(--flo);padding:2px 0 2px 15px}
+.angle .lbl{color:var(--flo)}
+.angle p{margin:5px 0 0;font-size:16px;line-height:1.5;max-width:60ch}
+.src{display:inline-flex;align-items:center;gap:6px;margin-top:18px;font-family:var(--ui);
+  font-size:12.5px;font-weight:600;color:var(--blue);text-decoration:none;
+  border-bottom:1.5px solid var(--blue);padding-bottom:1px}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px;padding-top:18px;border-top:1px solid var(--rule)}
+.act{background:none;border:1px solid var(--rule-firm);padding:8px 14px;font-size:12.5px;font-weight:600}
+.act:hover{border-color:var(--ink)}
+.act.primary{background:var(--blue);border-color:var(--blue);color:var(--on-blue)}
+.act[disabled]{opacity:.45;cursor:default}
+.aiblock{margin-top:18px;border:1px dashed var(--rule-firm);padding:14px 16px;background:var(--paper)}
+.aiblock ol,.aiblock ul{margin:8px 0 0;padding-left:19px}
+.aiblock li{margin-bottom:8px;font-size:15.5px;line-height:1.5}
+.aiblock p{margin:7px 0 0;font-size:15.5px;line-height:1.5}
+.aiblock p.warn{color:var(--flo)}
+.spin{font-family:var(--mono);font-size:12px;color:var(--ink-soft);margin:0}
+
+.clockbar{position:fixed;left:0;right:0;bottom:0;background:var(--ink);color:var(--paper);
+  padding:12px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  justify-content:center;z-index:30;border-top:3px solid var(--flo)}
+.digits{font-family:var(--mono);font-weight:500;font-size:clamp(30px,7vw,40px);
+  font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1.05}
+.phase{font-family:var(--ui);font-size:10.5px;font-weight:700;letter-spacing:.16em;
+  text-transform:uppercase;opacity:.78}
+.cbtn{background:none;border:1px solid currentColor;color:inherit;padding:7px 13px;
+  font-size:12px;font-weight:600}
+.cbtn.go{background:var(--flo);border-color:var(--flo);color:var(--on-flo)}
+
+.log{margin-top:40px;border-top:2px solid var(--ink);padding-top:14px}
+.loghead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.logrow{display:grid;grid-template-columns:74px 1fr auto;gap:12px;padding:11px 0;
+  border-bottom:1px solid var(--rule);align-items:baseline}
+.logrow.passed{opacity:.5}
+.when{font-family:var(--mono);font-size:11px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.what{font-size:15.5px;line-height:1.4;min-width:0}
+.what b{font-weight:600}
+.what small{display:block;font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);margin-top:2px}
+.tag{font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);white-space:nowrap}
+.empty{font-family:var(--mono);font-size:12px;color:var(--ink-soft);padding:14px 0;margin:0}
+.linkish{background:none;border:0;padding:0;font-family:var(--mono);font-size:11px;
+  color:var(--ink-soft);text-decoration:underline}
+@media(max-width:520px){.logrow{grid-template-columns:1fr;gap:3px}.tag{display:none}}
+.foot{margin-top:34px;font-family:var(--mono);font-size:11px;color:var(--ink-soft);
+  line-height:1.65;border-top:1px solid var(--rule);padding-top:14px}
+</style>
+
+<div class="wrap">
+  <header class="mast">
+    <div class="mark">Cold <em>Open</em></div>
+    <div class="tagline">draw a subject &middot; start the clock &middot; go in blind</div>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Mode">
+    <button class="tab" id="tab-sprint" role="tab" aria-selected="true">Sprint &mdash; solo</button>
+    <button class="tab" id="tab-paper" role="tab" aria-selected="false">Paper &mdash; two of you</button>
+  </div>
+
+  <section class="console" aria-label="Draw settings">
+    <div class="row">
+      <div class="field">
+        <span class="lbl" id="l-fam">Familiarity</span>
+        <div class="seg" role="group" aria-labelledby="l-fam">
+          <button id="fam-far" aria-pressed="false">Far from what I know</button>
+          <button id="fam-any" aria-pressed="true">Anywhere</button>
+          <button id="fam-close" aria-pressed="false">Close to home</button>
+        </div>
+      </div>
+      <div class="field">
+        <span class="lbl" id="l-min">Clock</span>
+        <div class="row" style="gap:8px">
+          <div class="seg" role="group" aria-labelledby="l-min">
+            <button class="mpreset" data-m="15" aria-pressed="false">15</button>
+            <button class="mpreset" data-m="20" aria-pressed="false">20</button>
+            <button class="mpreset" data-m="25" aria-pressed="true">25</button>
+            <button class="mpreset" data-m="30" aria-pressed="false">30</button>
+          </div>
+          <input class="mins" id="mins" type="number" min="1" max="180" value="25"
+                 aria-label="Minutes" inputmode="numeric">
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <button class="knownbtn" id="toggleknown" aria-expanded="false" aria-controls="knownpanel">
+        What I already know &mdash; <span id="knowncount">nothing ticked yet</span>
+      </button>
+      <div id="knownpanel" hidden>
+        <p class="hint">Tick the areas you'd call yourself at home in. <b>Far from what I know</b>
+          then avoids them; <b>close to home</b> draws only from them.
+          Unfiled oddities count as unknown territory.</p>
+        <div class="chips" id="chips"></div>
+      </div>
+    </div>
+  </section>
+
+  <button class="deal" id="deal">Deal <span class="kbd">space</span></button>
+
+  <article class="card" id="card" aria-live="polite"></article>
+
+  <section class="log">
+    <div class="loghead">
+      <h2 class="mark" style="font-size:16px">The log</h2>
+      <span class="tagline"><span id="logcount">nothing yet</span>
+        <button class="linkish" id="clearlog" hidden>clear</button></span>
+    </div>
+    <div id="logbody"></div>
+  </section>
+
+  <p class="foot" id="foot"></p>
+</div>
+
+<div class="clockbar" id="clockbar" hidden>
+  <div>
+    <div class="phase" id="phase">Research</div>
+    <div class="digits" id="digits" role="timer" aria-live="off">25:00</div>
+  </div>
+  <button class="cbtn go" id="c-go">Pause</button>
+  <button class="cbtn" id="c-skip">Next phase</button>
+  <button class="cbtn" id="c-stop">Stop</button>
+</div>
+
+<script src="corpus.js"></script>
+<script>
+(function(){
+"use strict";
+var SEEDS = window.SEEDS;
+var $ = function(id){ return document.getElementById(id); };
+var KEY = "coldopen.v1";
+var BANDS = ["brief article", "moderate article", "substantial article", "very long article"];
+
+var S = { mode:"sprint", fam:"any", known:[], mins:{sprint:25,paper:30}, card:null, log:[], recent:[] };
+var DB = null, SAMPLE = null;
+
+/* ---------- persistence ---------- */
+function loadLocal(){
+  try{
+    var raw = localStorage.getItem(KEY);
+    if(!raw) return;
+    var o = JSON.parse(raw);
+    if(o.fam) S.fam = o.fam;
+    if(Array.isArray(o.known)) S.known = o.known;
+    if(o.mins) S.mins = Object.assign(S.mins, o.mins);
+    if(o.mode) S.mode = o.mode;
+    if(Array.isArray(o.log)) S.log = o.log;
+  }catch(e){}
+}
+function saveLocal(){
+  try{
+    localStorage.setItem(KEY, JSON.stringify({
+      fam:S.fam, known:S.known, mins:S.mins, mode:S.mode, log:S.log.slice(0,300)
+    }));
+  }catch(e){}
+}
+function saveSettings(){
+  saveLocal();
+  if(DB) DB.doc("settings/main").set({fam:S.fam, known:S.known, mins:S.mins}).catch(function(){});
+}
+function mergeLog(list){
+  var byKey = {};
+  S.log.concat(list).forEach(function(e){
+    if(!e || !e.t) return;
+    var k = e.t + "|" + (e.at||"");
+    if(!byKey[k]) byKey[k] = e;
+  });
+  S.log = Object.keys(byKey).map(function(k){ return byKey[k]; })
+    .sort(function(a,b){ return (b.at||"").localeCompare(a.at||""); }).slice(0,300);
+}
+
+/* ---------- drawing ---------- */
+function pool(){ return S.mode === "sprint" ? SEEDS.topics : SEEDS.papers; }
+function deckFor(){ return S.mode === "sprint" ? SEEDS.shapes : SEEDS.lenses; }
+
+function eligible(){
+  var seen = {};
+  S.log.forEach(function(e){ seen[e.t] = 1; });
+  var p = pool().filter(function(x){ return !seen[x.t]; });
+  var known = {};
+  S.known.forEach(function(d){ known[d] = 1; });
+  var filtered = p;
+  if(S.known.length && S.fam === "far")
+    filtered = p.filter(function(x){ return x.d === "Wildcard" || !known[x.d]; });
+  if(S.known.length && S.fam === "close")
+    filtered = p.filter(function(x){ return !!known[x.d]; });
+  if(filtered.length) return filtered;
+  return p.length ? p : pool();
+}
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+function draw(){
+  var item = pick(eligible());
+  var deck = deckFor();
+  var shape = pick(deck);
+  for(var i=0; i<12 && S.recent.indexOf(shape.n) !== -1; i++) shape = pick(deck);
+  S.recent.unshift(shape.n); S.recent = S.recent.slice(0,4);
+  S.card = { item:item, shape:shape, ai:null, aiState:"idle" };
+  renderCard(true);
+}
+
+/* ---------- rendering ---------- */
+function esc(s){
+  return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];
+  });
+}
+function nf(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+
+function renderCard(animate){
+  var c = S.card, el = $("card");
+  if(!c){ el.innerHTML = ""; return; }
+  var it = c.item, isPaper = S.mode === "paper";
+  var meta = isPaper
+    ? esc(it.j) + " &middot; " + esc(it.y) + (it.f ? " &middot; " + esc(it.f) : "")
+      + " &middot; cited " + nf(it.c) + " times"
+    : "Wikipedia &middot; " + BANDS[it.z || 0]
+      + (it.o ? " &middot; from the unusual-articles list" : "");
+  var h = "";
+  var domTxt = it.d === "Wildcard" ? "unfiled" : it.d.toLowerCase();
+  if(!isPaper && it.o) domTxt += " &middot; oddity";
+  h += '<div class="cardtop"><span class="stamp">' + esc(c.shape.n) + "</span>";
+  h += '<span class="dom">' + domTxt + "</span></div>";
+  h += '<h1 class="title">' + esc(it.t) + "</h1>";
+  if(!isPaper && it.b) h += '<p class="deck">' + esc(it.b) + "</p>";
+  h += '<p class="meta">' + meta + "</p>";
+  h += '<p class="extract">' + esc(it.x) + "</p>";
+  h += '<div class="angle"><span class="lbl">' + (isPaper ? "Read it for this" : "Your angle") + "</span>";
+  h += "<p>" + esc(c.shape.p) + "</p></div>";
+  h += '<a class="src" href="' + esc(it.u) + '" target="_blank" rel="noopener noreferrer">'
+     + (isPaper ? "Open the paper" : "Open the article") + " &#8599;</a>";
+  h += '<div id="ai"></div>';
+  h += '<div class="acts">';
+  h += '<button class="act primary" id="startclock">Start the clock</button>';
+  h += '<button class="act" id="redeal">Deal another</button>';
+  h += '<button class="act" id="pass">Pass &mdash; not this one</button>';
+  h += '<button class="act" id="logit">Log it as done</button>';
+  if(SAMPLE) h += '<button class="act" id="askai">' + (isPaper ? "Reading notes" : "Sharpen it") + "</button>";
+  h += "</div>";
+  el.innerHTML = h;
+  el.classList.remove("dealt");
+  if(animate){ void el.offsetWidth; el.classList.add("dealt"); }
+  renderAI();
+  $("startclock").onclick = startClock;
+  $("redeal").onclick = draw;
+  $("pass").onclick = function(){ record("passed"); draw(); };
+  $("logit").onclick = function(){ record("done"); draw(); };
+  if($("askai")) $("askai").onclick = askAI;
+}
+
+function renderAI(){
+  var box = $("ai"); if(!box) return;
+  var c = S.card;
+  if(c.aiState === "idle"){ box.innerHTML = ""; return; }
+  if(c.aiState === "loading"){
+    box.innerHTML = '<div class="aiblock"><p class="spin">Asking Claude&hellip; this takes a few seconds.</p></div>';
+    return;
+  }
+  if(c.aiState === "error"){
+    box.innerHTML = '<div class="aiblock"><p class="spin">' + esc(c.ai) + "</p></div>";
+    return;
+  }
+  var a = c.ai, h = '<div class="aiblock">';
+  if(S.mode === "paper"){
+    if(a.why) h += '<span class="lbl">Why this one</span><p>' + esc(a.why) + "</p>";
+    if(a.watch && a.watch.length){
+      h += '<span class="lbl" style="display:block;margin-top:14px">Watch for</span><ul>';
+      a.watch.forEach(function(w){ h += "<li>" + esc(w) + "</li>"; });
+      h += "</ul>";
+    }
+    if(a.talk && a.talk.length){
+      h += '<span class="lbl" style="display:block;margin-top:14px">Talk about</span><ol>';
+      a.talk.forEach(function(t){ h += "<li>" + esc(t) + "</li>"; });
+      h += "</ol>";
+    }
+  }else{
+    if(a.angles && a.angles.length){
+      h += '<span class="lbl">Threads worth pulling</span><ol>';
+      a.angles.forEach(function(x){ h += "<li>" + esc(x) + "</li>"; });
+      h += "</ol>";
+    }
+    if(a.avoid) h += '<p class="warn"><b>Don\'t bother with:</b> ' + esc(a.avoid) + "</p>";
+  }
+  box.innerHTML = h + "</div>";
+}
+
+function askAI(){
+  var c = S.card; if(!c || !SAMPLE) return;
+  c.aiState = "loading"; renderAI();
+  var it = c.item, p;
+  if(S.mode === "paper"){
+    p = "Two curious non-specialists are going to read this paper on paper tonight and talk about it. "
+      + "They are reading through this lens: \"" + c.shape.n + " - " + c.shape.p + "\"\n\n"
+      + "PAPER: " + it.t + " (" + it.j + ", " + it.y + ")\nABSTRACT: " + it.x + "\n\n"
+      + "Reply with JSON only: {\"why\": one sentence on what makes this worth an evening, "
+      + "\"watch\": [2-3 specific things to notice while reading, each one sentence], "
+      + "\"talk\": [3 questions they could genuinely disagree about afterwards, each one sentence]}. "
+      + "Be concrete and specific to this paper. No preamble.";
+  }else{
+    p = "Someone has 25 minutes to research this and then give a 5-minute talk, with no prior knowledge. "
+      + "They must take this angle: \"" + c.shape.n + " - " + c.shape.p + "\"\n\n"
+      + "SUBJECT: " + it.t + "\nBACKGROUND: " + it.x + "\n\n"
+      + "Reply with JSON only: {\"angles\": [3-4 specific threads to chase in 25 minutes, "
+      + "each one sentence, each pointing at something concrete and findable], "
+      + "\"avoid\": one sentence naming the obvious boring take they should skip}. "
+      + "Be specific to this subject, not generic research advice. No preamble.";
+  }
+  SAMPLE.json(p, {modelTier:"default"}).then(function(data){
+    if(S.card !== c) return;
+    c.ai = data; c.aiState = "ok"; renderAI();
+  }).catch(function(e){
+    if(S.card !== c) return;
+    var code = e && e.code;
+    if(code === "not_granted"){ SAMPLE = null; c.aiState = "idle"; renderCard(false); return; }
+    c.aiState = "error";
+    c.ai = code === "rate_limited" ? "Too many requests just now - try again in a minute."
+         : "Couldn't reach Claude for this one. The card still works.";
+    renderAI();
+  });
+}
+
+function record(kind){
+  var c = S.card; if(!c) return;
+  var e = { t:c.item.t, u:c.item.u, d:c.item.d, s:c.shape.n, m:S.mode,
+            k:kind, at:new Date().toISOString() };
+  S.log.unshift(e);
+  S.log = S.log.slice(0,300);
+  renderLog(); saveLocal();
+  if(DB) DB.collection("sessions").doc().set(e).catch(function(){});
+}
+
+function renderLog(){
+  var body = $("logbody"), n = S.log.filter(function(e){ return e.k === "done"; }).length;
+  $("logcount").innerHTML = S.log.length
+    ? nf(n) + " done &middot; " + nf(S.log.length - n) + " passed"
+    : "nothing yet";
+  $("clearlog").hidden = !S.log.length;
+  if(!S.log.length){
+    body.innerHTML = '<p class="empty">Sessions you finish land here, and stop coming up again.</p>';
+    return;
+  }
+  var h = "";
+  S.log.slice(0,40).forEach(function(e){
+    var d = new Date(e.at);
+    var when = isNaN(d) ? "" : (d.getDate() + " " +
+      ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()]);
+    h += '<div class="logrow' + (e.k === "passed" ? " passed" : "") + '">';
+    h += '<span class="when">' + esc(when) + "</span>";
+    h += '<span class="what"><b>' + esc(e.t) + "</b><small>"
+       + esc(e.s) + " &middot; " + esc(e.m === "paper" ? "paper" : "sprint") + "</small></span>";
+    h += '<span class="tag">' + (e.k === "passed" ? "passed" : "done") + "</span></div>";
+  });
+  body.innerHTML = h;
+}
+
+/* ---------- clock ---------- */
+var T = { phases:[], i:0, left:0, running:false, tick:null };
+
+function phasesFor(){
+  var m = S.mins[S.mode];
+  return S.mode === "sprint"
+    ? [{n:"Research", s:m*60}, {n:"Assemble the 5 cards", s:5*60}, {n:"Present", s:5*60}]
+    : [{n:"Read", s:m*60}, {n:"Talk it over", s:15*60}];
+}
+function fmt(s){
+  var m = Math.floor(Math.abs(s)/60), r = Math.abs(s)%60;
+  return (s<0?"-":"") + m + ":" + (r<10?"0":"") + r;
+}
+function paintClock(){
+  var p = T.phases[T.i];
+  $("phase").textContent = p ? p.n : "";
+  $("digits").textContent = fmt(T.left);
+  $("c-go").textContent = T.running ? "Pause" : "Resume";
+}
+function startClock(){
+  T.phases = phasesFor(); T.i = 0; T.left = T.phases[0].s; T.running = true;
+  $("clockbar").hidden = false;
+  paintClock();
+  if(T.tick) clearInterval(T.tick);
+  T.tick = setInterval(function(){
+    if(!T.running) return;
+    T.left--;
+    if(T.left === 0) chime();
+    if(T.left <= -3) nextPhase();
+    paintClock();
+  }, 1000);
+}
+function nextPhase(){
+  if(T.i < T.phases.length - 1){ T.i++; T.left = T.phases[T.i].s; }
+  else stopClock();
+  paintClock();
+}
+function stopClock(){
+  T.running = false;
+  if(T.tick) clearInterval(T.tick);
+  T.tick = null;
+  $("clockbar").hidden = true;
+}
+function chime(){
+  try{
+    var Ctx = window.AudioContext || window.webkitAudioContext;
+    if(!Ctx) return;
+    var ac = new Ctx();
+    [0, 0.18].forEach(function(t, k){
+      var o = ac.createOscillator(), g = ac.createGain();
+      o.type = "triangle"; o.frequency.value = k ? 880 : 660;
+      o.connect(g); g.connect(ac.destination);
+      g.gain.setValueAtTime(0.0001, ac.currentTime + t);
+      g.gain.exponentialRampToValueAtTime(0.25, ac.currentTime + t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + t + 0.42);
+      o.start(ac.currentTime + t); o.stop(ac.currentTime + t + 0.45);
+    });
+    setTimeout(function(){ ac.close(); }, 1400);
+  }catch(e){}
+}
+
+/* ---------- controls ---------- */
+function setFam(v){
+  S.fam = v;
+  ["far","any","close"].forEach(function(k){
+    $("fam-" + k).setAttribute("aria-pressed", String(k === v));
+  });
+  saveSettings();
+}
+function setMins(v){
+  v = Math.max(1, Math.min(180, parseInt(v, 10) || 25));
+  S.mins[S.mode] = v;
+  $("mins").value = v;
+  [].forEach.call(document.querySelectorAll(".mpreset"), function(b){
+    b.setAttribute("aria-pressed", String(parseInt(b.dataset.m, 10) === v));
+  });
+  saveSettings();
+}
+function setMode(m){
+  S.mode = m;
+  $("tab-sprint").setAttribute("aria-selected", String(m === "sprint"));
+  $("tab-paper").setAttribute("aria-selected", String(m === "paper"));
+  $("l-min").textContent = m === "sprint" ? "Research clock" : "Reading clock";
+  setMins(S.mins[m]);
+  saveSettings();
+  draw();
+}
+function renderChips(){
+  var box = $("chips"), h = "";
+  SEEDS.domains.forEach(function(d){
+    h += '<button class="chip" data-d="' + esc(d) + '" aria-pressed="'
+       + (S.known.indexOf(d) !== -1) + '">' + esc(d) + "</button>";
+  });
+  box.innerHTML = h;
+  [].forEach.call(box.querySelectorAll(".chip"), function(b){
+    b.onclick = function(){
+      var d = b.dataset.d, i = S.known.indexOf(d);
+      if(i === -1) S.known.push(d); else S.known.splice(i, 1);
+      b.setAttribute("aria-pressed", String(i === -1));
+      paintKnownCount(); saveSettings();
+    };
+  });
+  paintKnownCount();
+}
+function paintKnownCount(){
+  $("knowncount").textContent = S.known.length
+    ? S.known.length + (S.known.length === 1 ? " area ticked" : " areas ticked")
+    : "nothing ticked yet";
+}
+
+/* ---------- boot ---------- */
+if(!SEEDS){
+  $("card").innerHTML = '<p class="empty">The deck failed to load. Reload the page.</p>';
+  return;
+}
+loadLocal();
+renderChips();
+setFam(S.fam);
+setMode(S.mode);
+renderLog();
+$("foot").innerHTML = nf(SEEDS.topics.length) + " subjects and " + nf(SEEDS.papers.length)
+  + " open-access papers in the deck, with " + SEEDS.shapes.length + " angles and "
+  + SEEDS.lenses.length + " reading lenses.<br>Subjects come from Wikipedia&rsquo;s unusual-articles "
+  + "list and its featured articles; papers from eLife, PLOS, the Royal Society, PNAS, "
+  + "Psychological Science and others.";
+
+$("deal").onclick = draw;
+$("tab-sprint").onclick = function(){ setMode("sprint"); };
+$("tab-paper").onclick = function(){ setMode("paper"); };
+["far","any","close"].forEach(function(k){
+  $("fam-" + k).onclick = function(){ setFam(k); };
+});
+[].forEach.call(document.querySelectorAll(".mpreset"), function(b){
+  b.onclick = function(){ setMins(b.dataset.m); };
+});
+$("mins").onchange = function(){ setMins($("mins").value); };
+$("toggleknown").onclick = function(){
+  var p = $("knownpanel"), open = p.hidden;
+  p.hidden = !open;
+  $("toggleknown").setAttribute("aria-expanded", String(open));
+};
+$("clearlog").onclick = function(){
+  if(!confirm("Clear the log? Everything in it becomes drawable again.")) return;
+  S.log = []; renderLog(); saveLocal();
+  if(DB) DB.collection("sessions").get().then(function(snap){
+    snap.docs.forEach(function(d){ DB.doc("sessions/" + d.id).delete().catch(function(){}); });
+  }).catch(function(){});
+};
+$("c-go").onclick = function(){ T.running = !T.running; paintClock(); };
+$("c-skip").onclick = nextPhase;
+$("c-stop").onclick = stopClock;
+document.addEventListener("keydown", function(e){
+  if(e.code !== "Space" || e.target.tagName === "INPUT" || e.target.tagName === "BUTTON") return;
+  e.preventDefault(); draw();
+});
+
+/* capabilities light up later, or never */
+if(window.claude && window.claude.use){
+  window.claude.use("sample").then(function(s){
+    SAMPLE = s || null;
+    if(SAMPLE) renderCard(false);
+  }).catch(function(){});
+
+  window.claude.use("db").then(function(db){
+    if(!db) return;
+    DB = db;
+    return DB.doc("settings/main").get().then(function(snap){
+      if(snap.exists){
+        var o = snap.data() || {};
+        if(o.fam) setFam(o.fam);
+        if(Array.isArray(o.known)){ S.known = o.known; renderChips(); }
+        if(o.mins){ S.mins = Object.assign(S.mins, o.mins); setMins(S.mins[S.mode]); }
+      }
+      DB.collection("sessions").orderBy("at", "desc").limit(300)
+        .onSnapshot(function(snap2){
+          mergeLog(snap2.docs.map(function(d){ return d.data() || {}; }));
+          renderLog(); saveLocal();
+        }, function(){});
+    });
+  }).catch(function(){});
+}
+})();
+</script>

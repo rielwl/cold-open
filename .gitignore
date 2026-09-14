@@ -1,0 +1,7 @@
+# Large intermediate scrape data - regenerate with the scripts in tools/
+tools/*.json
+tools/*.txt
+tools/*.log
+*.pyc
+__pycache__/
+_c.js
