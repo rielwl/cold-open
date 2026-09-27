@@ -294,7 +294,7 @@ var SCORES = {
 
 var S = { mode:"sprint", fam:"any", known:[], mins:{sprint:25,paper:30}, talk:30, easy:true,
           card:null, log:[], recent:[], notice:"", fixes:{ papers:{}, topics:{} } };
-var DB = null, SAMPLE = null;
+var DB = null, SAMPLE = null, DOWNLOADS = null;
 
 /* ---------- persistence ---------- */
 function loadLocal(){
@@ -687,11 +687,31 @@ function renderLog(){
   body.innerHTML = h;
 }
 
+// Inside the Claude viewer a page can't download directly; it offers the file
+// through the downloads capability and the viewer confirms. Anywhere else
+// (local, another host) a plain link download works.
 function download(name, obj){
-  var blob = new Blob([JSON.stringify(obj, null, 1)], { type:"application/json" });
+  var filename = name + "-" + new Date().toISOString().slice(0,10) + ".json";
+  var text = JSON.stringify(obj, null, 1);
+  if(DOWNLOADS){
+    DOWNLOADS.save({ filename:filename, data:text }).catch(function(e){
+      var code = e && e.code;
+      if(code === "declined") return;
+      S.notice = code === "rate_limited" ? "A save is already waiting for you to confirm."
+        : "Couldn't offer the file here (" + (code || "unavailable") + ").";
+      renderCard(false);
+    });
+    return;
+  }
+  if(window.claude){
+    S.notice = "Saving files isn't available in this view.";
+    renderCard(false);
+    return;
+  }
+  var blob = new Blob([text], { type:"application/json" });
   var a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = name + "-" + new Date().toISOString().slice(0,10) + ".json";
+  a.download = filename;
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
 }
@@ -932,6 +952,8 @@ document.addEventListener("keydown", function(e){
 
 /* capabilities light up later, or never */
 if(window.claude && window.claude.use){
+  window.claude.use("downloads").then(function(d){ DOWNLOADS = d || null; }).catch(function(){});
+
   window.claude.use("sample").then(function(s){
     SAMPLE = s || null;
     if(SAMPLE) renderCard(false);
