@@ -2,7 +2,9 @@
 // corpus.js to the repo root (no more copying it up by hand).
 //
 //   node tools/enrich.mjs            # reads tools/corpus.js if build5.py just made one, else ./corpus.js
+//   node tools/enrich.mjs fixes.json # also folds corrections exported from the app into the ratings files
 //
+// Sprint topics get k (talkability 0-3) and a corrected domain from tools/topic_ratings.tsv.
 // What it does to each paper:
 //   - looks it up on OpenAlex (cached in tools/openalex_cache.json) for a page
 //     count and a direct PDF link, keeping the DOI page as the fallback link
@@ -19,13 +21,17 @@ import { fileURLToPath } from "node:url";
 const TOOLS = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.dirname(TOOLS);
 const MAIL = "23545713+rielwl@users.noreply.github.com";
+// Optional free key from openalex.org: 10x the keyless daily budget.
+const KEY = process.env.OPENALEX_API_KEY ? "&api_key=" + process.env.OPENALEX_API_KEY : "";
 const CACHE = path.join(TOOLS, "openalex_cache.json");
 const RATINGS = path.join(TOOLS, "paper_ratings.tsv");
 
 const DOMS = { L:"Life & evolution", M:"Mind & behaviour", P:"Physics & space", E:"Earth & climate",
   C:"Chemistry & materials", X:"Maths & computing", B:"Medicine & the body",
   G:"Engineering & built things", H:"History & archaeology", S:"Society, law & money",
-  K:"Language & culture" };
+  K:"Language & culture", A:"Art & design" };
+const CODE = Object.fromEntries(Object.entries(DOMS).map(([c, d]) => [d, c]));
+const TOPIC_RATINGS = path.join(TOOLS, "topic_ratings.tsv");
 
 export const key = t => t.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "").slice(0, 80);
 
@@ -67,7 +73,7 @@ function idOf(u){
 const sleep = ms => new Promise(s => setTimeout(s, ms));
 async function getJSON(url){
   for(let a = 0; a < 3; a++){
-    const r = await fetch(url).catch(() => null);
+    const r = await fetch(url, { signal: AbortSignal.timeout(30000) }).catch(() => null);
     if(r && r.ok) return r.json();
     if(r && r.status === 429 && a === 2) throw new Error("OpenAlex daily budget used up - rerun tomorrow, the cache keeps what's done");
     await sleep(1500 * (a + 1));
@@ -91,7 +97,7 @@ for(const batch of chunks(todo.filter(x => x.id.pmc), 150)){
 }
 for(const batch of chunks(todo.filter(x => x.id && x.id.doi), 50)){
   const j = await getJSON("https://api.openalex.org/works?per-page=50&select=doi,biblio,best_oa_location&mailto="
-    + MAIL + "&filter=doi:" + batch.map(x => encodeURIComponent(x.id.doi)).join("|"));
+    + MAIL + KEY + "&filter=doi:" + batch.map(x => encodeURIComponent(x.id.doi)).join("|"));
   if(!j) continue;
   const byDoi = {};
   for(const w of j.results || []) byDoi[(w.doi || "").replace("https://doi.org/", "").toLowerCase()] = w;
@@ -104,18 +110,59 @@ for(const batch of chunks(todo.filter(x => x.id && x.id.doi), 50)){
   fs.writeFileSync(CACHE, JSON.stringify(cache));
 }
 
-const ratings = {};
-if(fs.existsSync(RATINGS)){
-  for(const line of fs.readFileSync(RATINGS, "utf8").split(/\r?\n/)){
-    const [k, a, d, e] = line.split("\t");
-    if(k && !k.startsWith("#")) ratings[k] = { a: +a, d: DOMS[d], e: +e };
+/* ---------- ratings, plus corrections exported from the app ---------- */
+// A ratings file is: header comments, then key<TAB>score<TAB>domain code[<TAB>e].
+function readTSV(file){
+  const head = [], rows = new Map();
+  if(fs.existsSync(file)) for(const line of fs.readFileSync(file, "utf8").split(/\r?\n/)){
+    if(!line) continue;
+    if(line.startsWith("#")) head.push(line);
+    else { const c = line.split("\t"); rows.set(c[0], c.slice(1)); }
+  }
+  return { head, rows };
+}
+function writeTSV(file, { head, rows }){
+  fs.writeFileSync(file, head.concat([...rows].map(([k, v]) => [k, ...v].join("\t"))).join("\n") + "\n");
+}
+const papersTSV = readTSV(RATINGS), topicsTSV = readTSV(TOPIC_RATINGS);
+if(!topicsTSV.head.length) topicsTSV.head.push("# key\tk(0-3 talkability: is there five minutes of talk in it?)\tdomain code",
+  "# domains: " + Object.entries(DOMS).map(([c, d]) => c + " " + d).join(" | "));
+
+// Any .json given on the command line is an app export ("Export fixes", or the log export).
+let fixed = 0;
+for(const f of process.argv.slice(2).filter(a => a.endsWith(".json"))){
+  const o = JSON.parse(fs.readFileSync(f, "utf8")), fx = o.fixes || {};
+  for(const [k, v] of Object.entries(fx.papers || {})){
+    const old = papersTSV.rows.get(k) || ["1", "", "1"];
+    papersTSV.rows.set(k, [v.a ?? old[0], CODE[v.d] || old[1], v.e ?? old[2]].map(String)); fixed++;
+  }
+  for(const [k, v] of Object.entries(fx.topics || {})){
+    const old = topicsTSV.rows.get(k) || ["1", ""];
+    topicsTSV.rows.set(k, [v.k ?? old[0], CODE[v.d] || old[1]].map(String)); fixed++;
   }
 }
+if(fixed){
+  writeTSV(RATINGS, papersTSV); writeTSV(TOPIC_RATINGS, topicsTSV);
+  console.log(`folded ${fixed} corrections into the ratings files`);
+}
 
-let rated = 0, pdfs = 0, pgs = 0;
+// A score of "x" means "doesn't belong in the deck" (not English, not a research
+// article, a stub): drop it here rather than deleting it upstream.
+const dropped = (tsv, x) => (tsv.rows.get(key(x.t)) || [])[0] === "x";
+const before = corpus.papers.length + corpus.topics.length;
+corpus.papers = corpus.papers.filter(p => !dropped(papersTSV, p));
+corpus.topics = corpus.topics.filter(t => !dropped(topicsTSV, t));
+const ndrop = before - corpus.papers.length - corpus.topics.length;
+if(ndrop) console.log(`dropped ${ndrop} cards rated x`);
+
+let rated = 0, pdfs = 0, pgs = 0, trated = 0;
+for(const t of corpus.topics){
+  const r = topicsTSV.rows.get(key(t.t));
+  if(r){ trated++; t.k = +r[0]; if(DOMS[r[1]]) t.d = DOMS[r[1]]; } else t.k = 1;
+}
 for(const p of corpus.papers){
-  const r = ratings[key(p.t)], oa = cache[key(p.t)] || {};
-  if(r){ rated++; p.a = r.a; if(r.d) p.d = r.d; p.e = r.e; } else { p.a = 1; p.e = 1; }
+  const r = papersTSV.rows.get(key(p.t)), oa = cache[key(p.t)] || {};
+  if(r){ rated++; p.a = +r[0]; if(DOMS[r[1]]) p.d = DOMS[r[1]]; p.e = +r[2]; } else { p.a = 1; p.e = 1; }
   const isFile = /\.pdf$|\/pdf(\/|$)|\.bib$/i.test(p.u);
   if(!oa.pdf && /\.pdf$|\/pdf(\/|$)/i.test(p.u)) oa.pdf = p.u;
   if(oa.pdf){ p.pdf = oa.pdf; pdfs++; }
@@ -126,9 +173,11 @@ for(const p of corpus.papers){
 for(const t of corpus.topics) t.x = trimToSentence(t.x, 160);
 // Angles and lenses now live in prompts.js, so they can be edited without a rebuild.
 delete corpus.shapes; delete corpus.lenses;
-corpus.domains = [...new Set([...corpus.domains, ...corpus.papers.map(p => p.d)])];
+corpus.domains = [...new Set([...corpus.domains, ...corpus.papers.map(p => p.d)])].filter(d => d !== "Wildcard");
 
 fs.writeFileSync(path.join(ROOT, "corpus.js"), "window.SEEDS=" + JSON.stringify(corpus) + ";");
 const byA = [0, 1, 2, 3].map(a => corpus.papers.filter(p => p.a === a).length);
+const byK = [0, 1, 2, 3].map(k => corpus.topics.filter(t => t.k === k).length);
 console.log(`papers ${corpus.papers.length}: rated ${rated}, pdf ${pdfs}, pages ${pgs}; a=0..3 ${byA.join("/")}`);
+console.log(`topics ${corpus.topics.length}: rated ${trated}; k=0..3 ${byK.join("/")}`);
 console.log("wrote corpus.js", (fs.statSync(path.join(ROOT, "corpus.js")).size / 1e6).toFixed(2), "MB");
