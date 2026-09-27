@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import json, os, random, re, collections
-from config import DOMAINS, PREFIX_DOMAINS, SHAPES, LENSES
+from config import DOMAINS, PREFIX_DOMAINS
 
 random.seed(11)
 HEAD2DOM = {h: d for d, hs in DOMAINS.items() for h in hs}
@@ -85,12 +85,9 @@ papers = pk
 print("PAPERS", len(papers))
 for k, v in pb.most_common(): print(f"   {v:5d}  {k}")
 
-corpus = {"topics": topics, "papers": papers,
-          "shapes": [{"n": n, "p": d} for n, d in SHAPES],
-          "lenses": [{"n": n, "p": d} for n, d in LENSES],
-          "domains": list(DOMAINS.keys())}
+corpus = {"topics": topics, "papers": papers, "domains": list(DOMAINS.keys())}
 with open("corpus.js", "w", encoding="utf-8") as f:
     f.write("window.SEEDS=")
     json.dump(corpus, f, ensure_ascii=False, separators=(",", ":"))
     f.write(";")
-print("corpus.js", round(os.path.getsize("corpus.js")/1e6, 2), "MB")
+print("corpus.js", round(os.path.getsize("corpus.js")/1e6, 2), "MB - now run: node enrich.mjs")

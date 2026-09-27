@@ -25,6 +25,7 @@
   --ghost:rgba(143,168,255,.16); --chip:rgba(143,168,255,.13);
 }
 *{box-sizing:border-box}
+[hidden]{display:none !important}
 body{background:var(--paper);color:var(--ink);font-family:var(--read);line-height:1.55;
   margin:0;padding-block:28px 150px;padding-left:20px;padding-right:20px;
   -webkit-font-smoothing:antialiased}
@@ -118,6 +119,8 @@ button{font-family:var(--ui);cursor:pointer;color:inherit}
 .cbtn{background:none;border:1px solid currentColor;color:inherit;padding:7px 13px;
   font-size:12px;font-weight:600}
 .cbtn.go{background:var(--flo);border-color:var(--flo);color:var(--on-flo)}
+@media(max-width:520px){.clockbar{gap:9px;padding:9px 10px;flex-wrap:nowrap}
+  .digits{font-size:27px}.cbtn{padding:7px 9px;font-size:11.5px;white-space:nowrap}}
 
 .log{margin-top:40px;border-top:2px solid var(--ink);padding-top:14px}
 .loghead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
@@ -133,8 +136,29 @@ button{font-family:var(--ui);cursor:pointer;color:inherit}
 .linkish{background:none;border:0;padding:0;font-family:var(--mono);font-size:11px;
   color:var(--ink-soft);text-decoration:underline}
 @media(max-width:520px){.logrow{grid-template-columns:1fr;gap:3px}.tag{display:none}}
+.srcs{display:flex;gap:18px;flex-wrap:wrap;align-items:baseline}
+.src.quiet{color:var(--ink-soft);border-bottom-color:var(--rule-firm)}
+.reasons{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.reasons .lbl{margin-right:4px}
+.notice{font-family:var(--mono);font-size:11.5px;color:var(--blue);margin:12px 0 0}
+.handout{display:none}
 .foot{margin-top:34px;font-family:var(--mono);font-size:11px;color:var(--ink-soft);
   line-height:1.65;border-top:1px solid var(--rule);padding-top:14px}
+
+/* Print handout: one sheet per person, for reading on paper. */
+@media print{
+  html:root:not([data-theme="none"]){--paper:#fff;--card:#fff;--ink:#000;--ink-soft:#444;
+    --blue:#000;--flo:#000;--on-flo:#fff;--rule:#bbb;--rule-firm:#888}  /* outranks the dark-mode tokens */
+  body{padding:0;background:#fff;color:#000;font-size:12pt}
+  body > .wrap > :not(.card), .clockbar, .acts, #ai, .reasons, .notice{display:none !important}
+  .card{border:0;box-shadow:none;padding:0;margin:0;animation:none}
+  .extract{font-size:11.5pt}
+  .src::after{content:" \2014 " attr(href);font-family:var(--mono);font-size:9pt;font-weight:400;word-break:break-all}
+  .handout{display:block;margin-top:18pt}
+  .handout h2{font-family:var(--ui);font-size:10pt;letter-spacing:.12em;text-transform:uppercase;margin:16pt 0 6pt}
+  .handout li{margin-bottom:5pt}
+  .lines{height:190pt;background:repeating-linear-gradient(#fff 0 23pt,#999 23pt 24pt)}
+}
 </style>
 
 <div class="wrap">
@@ -172,6 +196,27 @@ button{font-family:var(--ui);cursor:pointer;color:inherit}
         </div>
       </div>
     </div>
+    <div class="row paperonly">
+      <div class="field">
+        <span class="lbl" id="l-easy">Papers</span>
+        <div class="seg" role="group" aria-labelledby="l-easy">
+          <button id="easy-on" aria-pressed="true">Date night &mdash; anyone can follow</button>
+          <button id="easy-off" aria-pressed="false">Anything</button>
+        </div>
+      </div>
+      <div class="field">
+        <span class="lbl" id="l-talk">Talk clock</span>
+        <div class="row" style="gap:8px">
+          <div class="seg" role="group" aria-labelledby="l-talk">
+            <button class="tpreset" data-m="15" aria-pressed="false">15</button>
+            <button class="tpreset" data-m="30" aria-pressed="true">30</button>
+            <button class="tpreset" data-m="45" aria-pressed="false">45</button>
+          </div>
+          <input class="mins" id="talkmins" type="number" min="1" max="180" value="30"
+                 aria-label="Talk minutes" inputmode="numeric">
+        </div>
+      </div>
+    </div>
     <div class="field">
       <button class="knownbtn" id="toggleknown" aria-expanded="false" aria-controls="knownpanel">
         What I already know &mdash; <span id="knowncount">nothing ticked yet</span>
@@ -193,7 +238,10 @@ button{font-family:var(--ui);cursor:pointer;color:inherit}
     <div class="loghead">
       <h2 class="mark" style="font-size:16px">The log</h2>
       <span class="tagline"><span id="logcount">nothing yet</span>
+        <button class="linkish" id="exportlog" hidden>export</button>
+        <button class="linkish" id="importlog">import</button>
         <button class="linkish" id="clearlog" hidden>clear</button></span>
+      <input type="file" id="importfile" accept="application/json,.json" hidden>
     </div>
     <div id="logbody"></div>
   </section>
@@ -212,15 +260,27 @@ button{font-family:var(--ui);cursor:pointer;color:inherit}
 </div>
 
 <script src="corpus.js"></script>
+<script src="prompts.js"></script>
 <script>
 (function(){
 "use strict";
 var SEEDS = window.SEEDS;
+var P = window.PROMPTS || { shapes:(SEEDS && SEEDS.shapes) || [], lenses:(SEEDS && SEEDS.lenses) || [], talk:[] };
 var $ = function(id){ return document.getElementById(id); };
 var KEY = "coldopen.v1";
 var BANDS = ["brief article", "moderate article", "substantial article", "very long article"];
+var DAY = 864e5;
+// Why a card was passed, and how long before it can come back.
+var REASONS = [
+  {k:"known", n:"Already know it", days:180},
+  {k:"thin",  n:"Looks thin",      days:180},
+  {k:"work",  n:"Too close to work", days:180},
+  {k:"mood",  n:"Not in the mood", days:14}
+];
+var LEARN_AFTER = 3;  // "already know it" passes in one area before it gets ticked as known
 
-var S = { mode:"sprint", fam:"any", known:[], mins:{sprint:25,paper:30}, card:null, log:[], recent:[] };
+var S = { mode:"sprint", fam:"any", known:[], mins:{sprint:25,paper:30}, talk:30, easy:true,
+          card:null, log:[], recent:[], notice:"" };
 var DB = null, SAMPLE = null;
 
 /* ---------- persistence ---------- */
@@ -232,6 +292,8 @@ function loadLocal(){
     if(o.fam) S.fam = o.fam;
     if(Array.isArray(o.known)) S.known = o.known;
     if(o.mins) S.mins = Object.assign(S.mins, o.mins);
+    if(o.talk) S.talk = o.talk;
+    if(typeof o.easy === "boolean") S.easy = o.easy;
     if(o.mode) S.mode = o.mode;
     if(Array.isArray(o.log)) S.log = o.log;
   }catch(e){}
@@ -239,13 +301,14 @@ function loadLocal(){
 function saveLocal(){
   try{
     localStorage.setItem(KEY, JSON.stringify({
-      fam:S.fam, known:S.known, mins:S.mins, mode:S.mode, log:S.log.slice(0,300)
+      fam:S.fam, known:S.known, mins:S.mins, talk:S.talk, easy:S.easy, mode:S.mode, log:S.log.slice(0,300)
     }));
   }catch(e){}
 }
 function saveSettings(){
   saveLocal();
-  if(DB) DB.doc("settings/main").set({fam:S.fam, known:S.known, mins:S.mins}).catch(function(){});
+  if(DB) DB.doc("settings/main").set({fam:S.fam, known:S.known, mins:S.mins, talk:S.talk, easy:S.easy})
+    .catch(function(){});
 }
 function mergeLog(list){
   var byKey = {};
@@ -260,12 +323,26 @@ function mergeLog(list){
 
 /* ---------- drawing ---------- */
 function pool(){ return S.mode === "sprint" ? SEEDS.topics : SEEDS.papers; }
-function deckFor(){ return S.mode === "sprint" ? SEEDS.shapes : SEEDS.lenses; }
+function deckFor(){ return S.mode === "sprint" ? P.shapes : P.lenses; }
+function reason(k){
+  for(var i=0; i<REASONS.length; i++) if(REASONS[i].k === k) return REASONS[i];
+  return null;
+}
+// Done is forever; a pass comes back once its reason's cooldown runs out.
+function blocked(e, now){
+  if(e.k !== "passed") return true;
+  var r = reason(e.why), at = Date.parse(e.at);
+  return isNaN(at) || now - at < (r ? r.days : 180) * DAY;
+}
 
 function eligible(){
-  var seen = {};
-  S.log.forEach(function(e){ seen[e.t] = 1; });
+  var seen = {}, now = Date.now();
+  S.log.forEach(function(e){ if(blocked(e, now)) seen[e.t] = 1; });
   var p = pool().filter(function(x){ return !seen[x.t]; });
+  if(S.mode === "paper" && S.easy){
+    var easy = p.filter(function(x){ return (x.a == null ? 1 : x.a) >= 2; });
+    if(easy.length) p = easy;
+  }
   var known = {};
   S.known.forEach(function(d){ known[d] = 1; });
   var filtered = p;
@@ -279,12 +356,14 @@ function eligible(){
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
 function draw(){
+  stopClock();
   var item = pick(eligible());
-  var deck = deckFor();
+  // Lenses that need measurements aren't dealt for theory, model or method papers.
+  var deck = deckFor().filter(function(l){ return !(l.needs === "data" && item.e === 0); });
   var shape = pick(deck);
   for(var i=0; i<12 && S.recent.indexOf(shape.n) !== -1; i++) shape = pick(deck);
   S.recent.unshift(shape.n); S.recent = S.recent.slice(0,4);
-  S.card = { item:item, shape:shape, ai:null, aiState:"idle" };
+  S.card = { item:item, shape:shape, ai:null, aiState:"idle", passing:false };
   renderCard(true);
 }
 
@@ -295,6 +374,10 @@ function esc(s){
   });
 }
 function nf(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+function link(href, text, quiet){
+  return '<a class="src' + (quiet ? " quiet" : "") + '" href="' + esc(href)
+    + '" target="_blank" rel="noopener noreferrer">' + text + " &#8599;</a>";
+}
 
 function renderCard(animate){
   var c = S.card, el = $("card");
@@ -302,6 +385,7 @@ function renderCard(animate){
   var it = c.item, isPaper = S.mode === "paper";
   var meta = isPaper
     ? esc(it.j) + " &middot; " + esc(it.y) + (it.f ? " &middot; " + esc(it.f) : "")
+      + (it.pg ? " &middot; " + it.pg + " pages" : "")
       + " &middot; cited " + nf(it.c) + " times"
     : "Wikipedia &middot; " + BANDS[it.z || 0]
       + (it.o ? " &middot; from the unusual-articles list" : "");
@@ -316,30 +400,92 @@ function renderCard(animate){
   h += '<p class="extract">' + esc(it.x) + "</p>";
   h += '<div class="angle"><span class="lbl">' + (isPaper ? "Read it for this" : "Your angle") + "</span>";
   h += "<p>" + esc(c.shape.p) + "</p></div>";
-  h += '<a class="src" href="' + esc(it.u) + '" target="_blank" rel="noopener noreferrer">'
-     + (isPaper ? "Open the paper" : "Open the article") + " &#8599;</a>";
+  h += '<div class="srcs">';
+  if(!isPaper) h += link(it.u, "Open the article");
+  else if(it.pdf){
+    h += link(it.pdf, "Open the PDF");
+    if(it.u && it.u !== it.pdf) h += link(it.u, "Article page", true);
+  }
+  else h += link(it.u, "Open the paper");
+  h += "</div>";
+  if(S.notice){ h += '<p class="notice">' + esc(S.notice) + "</p>"; S.notice = ""; }
   h += '<div id="ai"></div>';
   h += '<div class="acts">';
   h += '<button class="act primary" id="startclock">Start the clock</button>';
   h += '<button class="act" id="redeal">Deal another</button>';
-  h += '<button class="act" id="pass">Pass &mdash; not this one</button>';
+  h += '<button class="act" id="pass" aria-expanded="' + c.passing + '">Pass &mdash; not this one</button>';
   h += '<button class="act" id="logit">Log it as done</button>';
+  if(isPaper){
+    h += '<button class="act" id="invite">Copy invite</button>';
+    h += '<button class="act" id="print">Print handout</button>';
+  }
   if(SAMPLE) h += '<button class="act" id="askai">' + (isPaper ? "Reading notes" : "Sharpen it") + "</button>";
   h += "</div>";
+  if(c.passing){
+    h += '<div class="reasons"><span class="lbl">Why?</span>';
+    REASONS.forEach(function(r){
+      h += '<button class="chip" data-why="' + r.k + '">' + esc(r.n) + "</button>";
+    });
+    h += "</div>";
+  }
+  if(isPaper) h += '<div class="handout" id="handout"></div>';
   el.innerHTML = h;
   el.classList.remove("dealt");
   if(animate){ void el.offsetWidth; el.classList.add("dealt"); }
   renderAI();
   $("startclock").onclick = startClock;
   $("redeal").onclick = draw;
-  $("pass").onclick = function(){ record("passed"); draw(); };
+  $("pass").onclick = function(){ c.passing = !c.passing; renderCard(false); };
   $("logit").onclick = function(){ record("done"); draw(); };
+  [].forEach.call(el.querySelectorAll("[data-why]"), function(b){
+    b.onclick = function(){ record("passed", b.dataset.why); draw(); };
+  });
+  if($("invite")) $("invite").onclick = invite;
+  if($("print")) $("print").onclick = function(){ window.print(); };
   if($("askai")) $("askai").onclick = askAI;
+}
+
+function renderHandout(){
+  var box = $("handout"); if(!box) return;
+  var a = S.card.ai && S.card.aiState === "ok" ? S.card.ai : {};
+  var talk = a.talk && a.talk.length ? a.talk : P.talk;
+  var h = "";
+  if(a.watch && a.watch.length){
+    h += "<h2>Watch for</h2><ul>";
+    a.watch.forEach(function(w){ h += "<li>" + esc(w) + "</li>"; });
+    h += "</ul>";
+  }
+  h += "<h2>Afterwards, talk about</h2><ol>";
+  (talk || []).forEach(function(t){ h += "<li>" + esc(t) + "</li>"; });
+  h += "</ol>";
+  h += "<h2>Notes</h2><div class=\"lines\"></div>";
+  box.innerHTML = h;
+}
+
+function inviteText(){
+  var c = S.card, it = c.item;
+  return "Date night reading: “" + it.t + "” (" + it.j + ", " + it.y
+    + (it.pg ? ", " + it.pg + " pages" : "") + ")\n" + (it.pdf || it.u) + "\n\n"
+    + "Read it for this — " + c.shape.n + ": " + c.shape.p + "\n\n"
+    + S.mins.paper + " minutes to read, then " + S.talk + " to talk it over.";
+}
+function invite(){
+  var text = inviteText(), btn = $("invite");
+  function shown(){
+    $("ai").innerHTML = '<div class="aiblock"><span class="lbl">Copy this to your date</span>'
+      + '<p style="white-space:pre-wrap;user-select:all">' + esc(text) + "</p></div>";
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){
+      if(btn) btn.textContent = "Invite copied";
+    }, shown);
+  }else shown();
 }
 
 function renderAI(){
   var box = $("ai"); if(!box) return;
   var c = S.card;
+  renderHandout();
   if(c.aiState === "idle"){ box.innerHTML = ""; return; }
   if(c.aiState === "loading"){
     box.innerHTML = '<div class="aiblock"><p class="spin">Asking Claude&hellip; this takes a few seconds.</p></div>';
@@ -386,10 +532,10 @@ function askAI(){
       + "\"talk\": [3 questions they could genuinely disagree about afterwards, each one sentence]}. "
       + "Be concrete and specific to this paper. No preamble.";
   }else{
-    p = "Someone has 25 minutes to research this and then give a 5-minute talk, with no prior knowledge. "
+    p = "Someone has " + S.mins.sprint + " minutes to research this and then give a 5-minute talk, with no prior knowledge. "
       + "They must take this angle: \"" + c.shape.n + " - " + c.shape.p + "\"\n\n"
       + "SUBJECT: " + it.t + "\nBACKGROUND: " + it.x + "\n\n"
-      + "Reply with JSON only: {\"angles\": [3-4 specific threads to chase in 25 minutes, "
+      + "Reply with JSON only: {\"angles\": [3-4 specific threads to chase in " + S.mins.sprint + " minutes, "
       + "each one sentence, each pointing at something concrete and findable], "
       + "\"avoid\": one sentence naming the obvious boring take they should skip}. "
       + "Be specific to this subject, not generic research advice. No preamble.";
@@ -408,14 +554,27 @@ function askAI(){
   });
 }
 
-function record(kind){
+function record(kind, why){
   var c = S.card; if(!c) return;
   var e = { t:c.item.t, u:c.item.u, d:c.item.d, s:c.shape.n, m:S.mode,
             k:kind, at:new Date().toISOString() };
+  if(why) e.why = why;
   S.log.unshift(e);
   S.log = S.log.slice(0,300);
+  if(why === "known") learnKnown(e.d);
   renderLog(); saveLocal();
   if(DB) DB.collection("sessions").doc().set(e).catch(function(){});
+}
+
+// Passing enough cards in one area as "already know it" ticks that area for you.
+function learnKnown(d){
+  if(!d || d === "Wildcard" || S.known.indexOf(d) !== -1) return;
+  var n = S.log.filter(function(e){ return e.why === "known" && e.d === d; }).length;
+  if(n < LEARN_AFTER) return;
+  S.known.push(d);
+  renderChips(); saveSettings();
+  S.notice = "Ticked “" + d + "” as somewhere you're at home — you've passed "
+    + n + " of its cards as already known. Untick it under What I already know.";
 }
 
 function renderLog(){
@@ -424,32 +583,60 @@ function renderLog(){
     ? nf(n) + " done &middot; " + nf(S.log.length - n) + " passed"
     : "nothing yet";
   $("clearlog").hidden = !S.log.length;
+  $("exportlog").hidden = !S.log.length;
   if(!S.log.length){
-    body.innerHTML = '<p class="empty">Sessions you finish land here, and stop coming up again.</p>';
+    body.innerHTML = '<p class="empty">Sessions you finish land here, and stop coming up again. '
+      + 'Passed cards come back after a while.</p>';
     return;
   }
   var h = "";
   S.log.slice(0,40).forEach(function(e){
-    var d = new Date(e.at);
+    var d = new Date(e.at), r = reason(e.why);
     var when = isNaN(d) ? "" : (d.getDate() + " " +
       ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()]);
     h += '<div class="logrow' + (e.k === "passed" ? " passed" : "") + '">';
     h += '<span class="when">' + esc(when) + "</span>";
     h += '<span class="what"><b>' + esc(e.t) + "</b><small>"
        + esc(e.s) + " &middot; " + esc(e.m === "paper" ? "paper" : "sprint") + "</small></span>";
-    h += '<span class="tag">' + (e.k === "passed" ? "passed" : "done") + "</span></div>";
+    h += '<span class="tag">' + (e.k === "passed" ? (r ? esc(r.n.toLowerCase()) : "passed") : "done") + "</span></div>";
   });
   body.innerHTML = h;
 }
 
+function exportLog(){
+  var blob = new Blob([JSON.stringify({ app:"cold-open", exported:new Date().toISOString(),
+    known:S.known, log:S.log }, null, 1)], { type:"application/json" });
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "cold-open-log-" + new Date().toISOString().slice(0,10) + ".json";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+}
+function importLog(file){
+  var rd = new FileReader();
+  rd.onload = function(){
+    try{
+      var o = JSON.parse(rd.result), list = Array.isArray(o) ? o : o.log;
+      if(!Array.isArray(list)) throw 0;
+      var before = S.log.length;
+      mergeLog(list);
+      renderLog(); saveLocal();
+      S.notice = "Imported " + (S.log.length - before) + " new log entries.";
+    }catch(e){ S.notice = "That file isn't a Cold Open log export."; }
+    renderCard(false);
+  };
+  rd.readAsText(file);
+}
+
 /* ---------- clock ---------- */
 var T = { phases:[], i:0, left:0, running:false, tick:null };
+var AC = null;
 
 function phasesFor(){
   var m = S.mins[S.mode];
   return S.mode === "sprint"
     ? [{n:"Research", s:m*60}, {n:"Assemble the 5 cards", s:5*60}, {n:"Present", s:5*60}]
-    : [{n:"Read", s:m*60}, {n:"Talk it over", s:15*60}];
+    : [{n:"Read", s:m*60}, {n:"Talk it over", s:S.talk*60}];
 }
 function fmt(s){
   var m = Math.floor(Math.abs(s)/60), r = Math.abs(s)%60;
@@ -461,7 +648,16 @@ function paintClock(){
   $("digits").textContent = fmt(T.left);
   $("c-go").textContent = T.running ? "Pause" : "Resume";
 }
+// Browsers only allow sound after a click, so the audio context is made on "Start the clock".
+function unlockAudio(){
+  try{
+    var Ctx = window.AudioContext || window.webkitAudioContext;
+    if(!AC && Ctx) AC = new Ctx();
+    if(AC && AC.state === "suspended") AC.resume();
+  }catch(e){}
+}
 function startClock(){
+  unlockAudio();
   T.phases = phasesFor(); T.i = 0; T.left = T.phases[0].s; T.running = true;
   $("clockbar").hidden = false;
   paintClock();
@@ -487,19 +683,16 @@ function stopClock(){
 }
 function chime(){
   try{
-    var Ctx = window.AudioContext || window.webkitAudioContext;
-    if(!Ctx) return;
-    var ac = new Ctx();
+    if(!AC) return;
     [0, 0.18].forEach(function(t, k){
-      var o = ac.createOscillator(), g = ac.createGain();
+      var o = AC.createOscillator(), g = AC.createGain();
       o.type = "triangle"; o.frequency.value = k ? 880 : 660;
-      o.connect(g); g.connect(ac.destination);
-      g.gain.setValueAtTime(0.0001, ac.currentTime + t);
-      g.gain.exponentialRampToValueAtTime(0.25, ac.currentTime + t + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + t + 0.42);
-      o.start(ac.currentTime + t); o.stop(ac.currentTime + t + 0.45);
+      o.connect(g); g.connect(AC.destination);
+      g.gain.setValueAtTime(0.0001, AC.currentTime + t);
+      g.gain.exponentialRampToValueAtTime(0.25, AC.currentTime + t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime + t + 0.42);
+      o.start(AC.currentTime + t); o.stop(AC.currentTime + t + 0.45);
     });
-    setTimeout(function(){ ac.close(); }, 1400);
   }catch(e){}
 }
 
@@ -511,13 +704,29 @@ function setFam(v){
   });
   saveSettings();
 }
-function setMins(v){
-  v = Math.max(1, Math.min(180, parseInt(v, 10) || 25));
-  S.mins[S.mode] = v;
-  $("mins").value = v;
-  [].forEach.call(document.querySelectorAll(".mpreset"), function(b){
+function clampMins(v, dflt){ return Math.max(1, Math.min(180, parseInt(v, 10) || dflt)); }
+function pressPresets(sel, v){
+  [].forEach.call(document.querySelectorAll(sel), function(b){
     b.setAttribute("aria-pressed", String(parseInt(b.dataset.m, 10) === v));
   });
+}
+function setMins(v){
+  v = clampMins(v, 25);
+  S.mins[S.mode] = v;
+  $("mins").value = v;
+  pressPresets(".mpreset", v);
+  saveSettings();
+}
+function setTalk(v){
+  S.talk = v = clampMins(v, 30);
+  $("talkmins").value = v;
+  pressPresets(".tpreset", v);
+  saveSettings();
+}
+function setEasy(v){
+  S.easy = v;
+  $("easy-on").setAttribute("aria-pressed", String(v));
+  $("easy-off").setAttribute("aria-pressed", String(!v));
   saveSettings();
 }
 function setMode(m){
@@ -525,6 +734,7 @@ function setMode(m){
   $("tab-sprint").setAttribute("aria-selected", String(m === "sprint"));
   $("tab-paper").setAttribute("aria-selected", String(m === "paper"));
   $("l-min").textContent = m === "sprint" ? "Research clock" : "Reading clock";
+  [].forEach.call(document.querySelectorAll(".paperonly"), function(el){ el.hidden = m !== "paper"; });
   setMins(S.mins[m]);
   saveSettings();
   draw();
@@ -560,11 +770,15 @@ if(!SEEDS){
 loadLocal();
 renderChips();
 setFam(S.fam);
+setEasy(S.easy);
+setTalk(S.talk);
 setMode(S.mode);
 renderLog();
+var easyN = SEEDS.papers.filter(function(x){ return (x.a == null ? 1 : x.a) >= 2; }).length;
 $("foot").innerHTML = nf(SEEDS.topics.length) + " subjects and " + nf(SEEDS.papers.length)
-  + " open-access papers in the deck, with " + SEEDS.shapes.length + " angles and "
-  + SEEDS.lenses.length + " reading lenses.<br>Subjects come from Wikipedia&rsquo;s unusual-articles "
+  + " open-access papers in the deck (" + nf(easyN) + " marked date-night friendly), with "
+  + P.shapes.length + " angles and " + P.lenses.length + " reading lenses.<br>"
+  + "Subjects come from Wikipedia&rsquo;s unusual-articles "
   + "list and its featured articles; papers from eLife, PLOS, the Royal Society, PNAS, "
   + "Psychological Science and others.";
 
@@ -574,10 +788,16 @@ $("tab-paper").onclick = function(){ setMode("paper"); };
 ["far","any","close"].forEach(function(k){
   $("fam-" + k).onclick = function(){ setFam(k); };
 });
+$("easy-on").onclick = function(){ setEasy(true); draw(); };
+$("easy-off").onclick = function(){ setEasy(false); draw(); };
 [].forEach.call(document.querySelectorAll(".mpreset"), function(b){
   b.onclick = function(){ setMins(b.dataset.m); };
 });
+[].forEach.call(document.querySelectorAll(".tpreset"), function(b){
+  b.onclick = function(){ setTalk(b.dataset.m); };
+});
 $("mins").onchange = function(){ setMins($("mins").value); };
+$("talkmins").onchange = function(){ setTalk($("talkmins").value); };
 $("toggleknown").onclick = function(){
   var p = $("knownpanel"), open = p.hidden;
   p.hidden = !open;
@@ -590,12 +810,20 @@ $("clearlog").onclick = function(){
     snap.docs.forEach(function(d){ DB.doc("sessions/" + d.id).delete().catch(function(){}); });
   }).catch(function(){});
 };
+$("exportlog").onclick = exportLog;
+$("importlog").onclick = function(){ $("importfile").click(); };
+$("importfile").onchange = function(){
+  if(this.files && this.files[0]) importLog(this.files[0]);
+  this.value = "";
+};
 $("c-go").onclick = function(){ T.running = !T.running; paintClock(); };
 $("c-skip").onclick = nextPhase;
 $("c-stop").onclick = stopClock;
 document.addEventListener("keydown", function(e){
   if(e.code !== "Space" || e.target.tagName === "INPUT" || e.target.tagName === "BUTTON") return;
-  e.preventDefault(); draw();
+  e.preventDefault();
+  if($("clockbar").hidden) draw();                  // mid-session, space pauses instead of re-dealing
+  else { T.running = !T.running; paintClock(); }
 });
 
 /* capabilities light up later, or never */
@@ -614,6 +842,8 @@ if(window.claude && window.claude.use){
         if(o.fam) setFam(o.fam);
         if(Array.isArray(o.known)){ S.known = o.known; renderChips(); }
         if(o.mins){ S.mins = Object.assign(S.mins, o.mins); setMins(S.mins[S.mode]); }
+        if(o.talk) setTalk(o.talk);
+        if(typeof o.easy === "boolean") setEasy(o.easy);
       }
       DB.collection("sessions").orderBy("at", "desc").limit(300)
         .onSnapshot(function(snap2){
