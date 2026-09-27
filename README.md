@@ -6,7 +6,7 @@ Two modes:
 
 - **Sprint (solo)** — draws an unfamiliar subject plus one of 20 *angles* you're
   required to take. Research it against the clock, then give a talk of under five
-  minutes.
+  minutes. **Talkable** (on by default) skips subjects too thin to fill five minutes.
 - **Paper (two of you)** — draws an open-access paper plus one of 12 *reading
   lenses*, so you each read for something specific rather than nodding along.
   **Date night** (on by default) sticks to papers two non-specialists can follow.
@@ -49,7 +49,7 @@ viewer; everywhere else the button simply doesn't render.
 
 ## The deck
 
-4,360 subjects and 3,230 papers, drawn from real sources rather than generated.
+5,502 subjects and 4,163 papers, drawn from real sources rather than generated.
 
 **Subjects** come from three places:
 
@@ -60,31 +60,55 @@ viewer; everywhere else the button simply doesn't render.
 2. Featured articles, restricted to science, history, engineering and
    humanities headings — warships, football and discographies are dropped.
 3. Category top-ups for the domains Wikipedia's featured list covers thinly
-   (chemistry, psychology, mathematics, medicine).
+   (chemistry, psychology, maths, medicine, physics, art), from `topup.py` and
+   `extend.mjs`.
 
 **Papers** come from OpenAlex, restricted to open-access research articles in
 eLife, PLOS, the Royal Society journals, PNAS, *Psychological Science*, *Journal
 of Economic Perspectives* and others, with a citation band and a title blacklist
 that removes protocols, errata, genome announcements and methodology papers.
+`extend.mjs` adds open-access Arts & Humanities, linguistics, history and
+archaeology papers, because the science journals barely cover them.
 
-Every paper also carries three hand-reviewed labels from `tools/paper_ratings.tsv`:
-how easy it is for two non-specialists (0–3; Date night deals 2 and 3), its real
-subject area (OpenAlex's own topic files the 1918 flu under maths, for example),
-and whether it reports its own data, so "find the effect size" isn't dealt for a
-theory paper. Page counts and direct PDF links come from OpenAlex.
+Every card also carries hand-reviewed labels, kept in two committed files:
+
+- `tools/paper_ratings.tsv`: how easy the paper is for two non-specialists
+  (0–3; Date night deals 2 and 3), its real subject area (OpenAlex's own topic
+  files the 1918 flu under maths, for example), and whether it reports its own
+  data, so "find the effect size" isn't dealt for a theory paper.
+- `tools/topic_ratings.tsv`: whether a Sprint subject has five minutes of talk in
+  it (0–3; Talkable deals 2 and 3), and its real subject area.
+
+Page counts and direct PDF links come from OpenAlex.
+
+### Correcting a rating
+
+Every card has a **fix this** link under its details. It lets you change the
+score, the subject area and (for papers) whether it reports its own data. The
+fix applies straight away on that device. Passing a card as **looks thin** also
+lowers its score by one.
+
+To make fixes permanent for everyone, use **export fixes** in the log, then:
+
+```sh
+node tools/enrich.mjs cold-open-fixes-2026-10-01.json   # folds them into the .tsv files
+git commit -am "Rating fixes" && git push
+```
+
+The full log export carries your fixes too, so importing it on another device
+brings them across.
 
 ### Depth filtering
 
 Every subject carries a depth band shown on the card (`brief` / `moderate` /
-`substantial` / `very long`), derived from the article's byte length. Oddities
-need at least 10,000 bytes to make the cut — below that you get one-joke entries
-that can't sustain a five-minute talk. That threshold is the single number worth
-tuning; it lives in `tools/build5.py`.
+`substantial` / `very long`), derived from the article's byte length. The
+talkability label is now the main filter; the byte floors (10,000 for oddities in
+`tools/build5.py`, 9,000 for top-ups in `tools/extend.mjs`) only keep stubs out.
 
 ### Rebuilding the deck
 
 Run in order, from `tools/`. Each step writes intermediate JSON that the next one
-reads. They hit live APIs and are rate-limit sensitive, so expect a few minutes.
+reads. They hit live APIs, so expect a few minutes.
 
 ```sh
 python fetch_wiki.py     # candidate titles: unusual list + featured articles
@@ -93,15 +117,26 @@ python unusual5.py       # themed oddity tables, with their curated blurbs
 python topup.py          # extra subjects for the thin domains
 python papers3.py        # open-access papers, classified by OpenAlex field
 python build5.py         # writes tools/corpus.js
+node extend.mjs          # more subjects for thin areas + humanities papers
 node enrich.mjs          # ratings, page counts, PDF links; writes ./corpus.js
 ```
 
-`enrich.mjs` can also be re-run on its own after editing `paper_ratings.tsv`.
-It looks papers up by DOI, 50 per request, because keyless OpenAlex now has a
-small daily credit budget that title searches burn through; results are cached
-in `tools/openalex_cache.json`. Papers with no ratings row (anything new from a
-rebuild) default to approachability 1, so they stay off Date night until
-someone labels them.
+`extend.mjs` and `enrich.mjs` also work on their own against the committed
+`corpus.js`, which is how the deck is usually updated. Both cache what they fetch
+(`tools/*_cache.json`, not committed), so re-runs are quick.
+
+**OpenAlex.** Since February 2026 OpenAlex meters its API. Looking up one work by
+ID is free, a filtered list costs $0.0001, and a search costs $0.001. Without a
+key you get about $0.10 a day. A free key from openalex.org gives $1 a day. The
+scripts only use lists and DOI batches (50 papers per call), so a full enrich is
+about 70 calls and the humanities pull about 7. For big rebuilds, set a key:
+
+```sh
+export OPENALEX_API_KEY=...        # PowerShell: $env:OPENALEX_API_KEY="..."
+```
+
+Anything new with no ratings row defaults to 1, so it stays off Date night and
+Talkable until someone labels it (see AGENTS.md) or fixes it in the app.
 
 ## Hosting
 

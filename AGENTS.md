@@ -12,10 +12,23 @@ Read `README.md` for what the app is and `NEXT-STEPS.md` for where it stands.
 - `prompts.js` holds the Sprint angles and Paper reading lenses as plain data.
   Edit it directly; no rebuild needed. A lens with `needs:"data"` is only dealt
   for papers that report their own measurements (`e:1` in the deck).
-- `tools/paper_ratings.tsv` is hand-reviewed data, committed on purpose:
-  approachability (`a`, 0-3, drives "Date night"), corrected domain, and the
-  empirical flag, keyed by normalised title. New papers without a row get
-  `a=1, e=1` and their OpenAlex domain.
+- `tools/paper_ratings.tsv` and `tools/topic_ratings.tsv` are hand-reviewed
+  data, committed on purpose, keyed by normalised title (`key()` in
+  `tools/enrich.mjs`, `keyOf()` in `index.html`: keep the two identical).
+  Papers: approachability `a` 0-3 (drives Date night), domain code, empirical
+  flag `e`. Subjects: talkability `k` 0-3 (drives Talkable), domain code.
+  Anything without a row gets 1 and keeps its original domain.
+- Corrections made in the app are exported as JSON ("export fixes") and folded
+  in with `node tools/enrich.mjs <file>.json`. That's the supported way to change
+  a rating; editing the .tsv by hand also works.
+
+## Labelling new cards
+
+`tools/extend.mjs` and rebuilds add cards with no ratings row. To label them,
+dump the unrated ones (title plus the first ~250 characters of text) and judge
+each by hand against the scales in the headers of the .tsv files, rather than
+with a keyword heuristic (heuristics were tried and rank "gene-set enrichment
+analysis" as easy reading). Append rows, then re-run `node tools/enrich.mjs`.
 
 ## House rules
 
@@ -37,7 +50,8 @@ Read `README.md` for what the app is and `NEXT-STEPS.md` for where it stands.
 
 There are no automated tests. Serve the folder (`npx serve .` or
 `python -m http.server`), then in a browser: deal in both modes, start and stop
-the clock, re-deal mid-clock, pass with a reason, and preview the print handout
+the clock, re-deal mid-clock, pass with a reason, correct a rating with "fix
+this" (it should survive a reload), and preview the print handout
 (Paper mode, Print handout). Check dark mode and a 390px-wide window.
 
 ## Deploying
