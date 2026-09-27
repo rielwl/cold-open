@@ -141,6 +141,12 @@ button{font-family:var(--ui);cursor:pointer;color:inherit}
 .reasons{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:12px}
 .reasons .lbl{margin-right:4px}
 .notice{font-family:var(--mono);font-size:11.5px;color:var(--blue);margin:12px 0 0}
+.rating{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:4px;
+  display:flex;gap:8px;flex-wrap:wrap;align-items:baseline}
+.fixer{margin-top:10px;border:1px dashed var(--rule-firm);padding:12px 14px;display:flex;
+  flex-direction:column;gap:11px;background:var(--paper)}
+.fixer select{font-family:var(--ui);font-size:12px;padding:6px 8px;background:var(--card);
+  color:var(--ink);border:1px solid var(--rule-firm);max-width:100%}
 .handout{display:none}
 .foot{margin-top:34px;font-family:var(--mono);font-size:11px;color:var(--ink-soft);
   line-height:1.65;border-top:1px solid var(--rule);padding-top:14px}
@@ -150,7 +156,7 @@ button{font-family:var(--ui);cursor:pointer;color:inherit}
   html:root:not([data-theme="none"]){--paper:#fff;--card:#fff;--ink:#000;--ink-soft:#444;
     --blue:#000;--flo:#000;--on-flo:#fff;--rule:#bbb;--rule-firm:#888}  /* outranks the dark-mode tokens */
   body{padding:0;background:#fff;color:#000;font-size:12pt}
-  body > .wrap > :not(.card), .clockbar, .acts, #ai, .reasons, .notice{display:none !important}
+  body > .wrap > :not(.card), .clockbar, .acts, #ai, .reasons, .notice, .rating, .fixer{display:none !important}
   .card{border:0;box-shadow:none;padding:0;margin:0;animation:none}
   .extract{font-size:11.5pt}
   .src::after{content:" \2014 " attr(href);font-family:var(--mono);font-size:9pt;font-weight:400;word-break:break-all}
@@ -196,7 +202,7 @@ button{font-family:var(--ui);cursor:pointer;color:inherit}
         </div>
       </div>
     </div>
-    <div class="row paperonly">
+    <div class="row">
       <div class="field">
         <span class="lbl" id="l-easy">Papers</span>
         <div class="seg" role="group" aria-labelledby="l-easy">
@@ -204,7 +210,7 @@ button{font-family:var(--ui);cursor:pointer;color:inherit}
           <button id="easy-off" aria-pressed="false">Anything</button>
         </div>
       </div>
-      <div class="field">
+      <div class="field paperonly">
         <span class="lbl" id="l-talk">Talk clock</span>
         <div class="row" style="gap:8px">
           <div class="seg" role="group" aria-labelledby="l-talk">
@@ -239,6 +245,7 @@ button{font-family:var(--ui);cursor:pointer;color:inherit}
       <h2 class="mark" style="font-size:16px">The log</h2>
       <span class="tagline"><span id="logcount">nothing yet</span>
         <button class="linkish" id="exportlog" hidden>export</button>
+        <button class="linkish" id="exportfixes" hidden>export fixes</button>
         <button class="linkish" id="importlog">import</button>
         <button class="linkish" id="clearlog" hidden>clear</button></span>
       <input type="file" id="importfile" accept="application/json,.json" hidden>
@@ -278,9 +285,15 @@ var REASONS = [
   {k:"mood",  n:"Not in the mood", days:14}
 ];
 var LEARN_AFTER = 3;  // "already know it" passes in one area before it gets ticked as known
+// Minimum rating for Date night (papers, a) and Talkable (subjects, k); both 0-3.
+var EASY_MIN = { paper:2, sprint:2 };
+var SCORES = {
+  paper:  { f:"a", name:"Date-night rating", n:["Specialists only","A keen outsider gets the gist","Followable with some effort","Anyone could argue about it"] },
+  sprint: { f:"k", name:"Talkability",       n:["One joke, no talk","Thin, but there's something","A solid five minutes","Could talk for an hour"] }
+};
 
 var S = { mode:"sprint", fam:"any", known:[], mins:{sprint:25,paper:30}, talk:30, easy:true,
-          card:null, log:[], recent:[], notice:"" };
+          card:null, log:[], recent:[], notice:"", fixes:{ papers:{}, topics:{} } };
 var DB = null, SAMPLE = null;
 
 /* ---------- persistence ---------- */
@@ -296,12 +309,13 @@ function loadLocal(){
     if(typeof o.easy === "boolean") S.easy = o.easy;
     if(o.mode) S.mode = o.mode;
     if(Array.isArray(o.log)) S.log = o.log;
+    if(o.fixes) S.fixes = { papers:o.fixes.papers || {}, topics:o.fixes.topics || {} };
   }catch(e){}
 }
 function saveLocal(){
   try{
     localStorage.setItem(KEY, JSON.stringify({
-      fam:S.fam, known:S.known, mins:S.mins, talk:S.talk, easy:S.easy, mode:S.mode, log:S.log.slice(0,300)
+      fam:S.fam, known:S.known, mins:S.mins, talk:S.talk, easy:S.easy, mode:S.mode, log:S.log.slice(0,300), fixes:S.fixes
     }));
   }catch(e){}
 }
@@ -321,6 +335,30 @@ function mergeLog(list){
     .sort(function(a,b){ return (b.at||"").localeCompare(a.at||""); }).slice(0,300);
 }
 
+/* ---------- rating fixes ----------
+   Corrections made on this device override the deck's labels. "Export fixes"
+   hands them to tools/enrich.mjs, which folds them into the ratings files. */
+function keyOf(t){ return String(t).toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "").slice(0, 80); }
+function kindOf(mode){ return mode === "paper" ? "papers" : "topics"; }
+function applyFixes(){
+  [["papers", SEEDS.papers], ["topics", SEEDS.topics]].forEach(function(pair){
+    var fx = S.fixes[pair[0]];
+    if(!Object.keys(fx).length) return;
+    pair[1].forEach(function(x){ var f = fx[keyOf(x.t)]; if(f) Object.assign(x, f); });
+  });
+}
+function setFix(item, mode, fields){
+  var kind = kindOf(mode), k = keyOf(item.t);
+  S.fixes[kind][k] = Object.assign(S.fixes[kind][k] || {}, fields);
+  Object.assign(item, fields);
+  saveLocal(); renderLog();
+}
+function score(x, mode){
+  var v = x[SCORES[mode || S.mode].f];
+  return v == null ? 1 : v;
+}
+function fixCount(){ return Object.keys(S.fixes.papers).length + Object.keys(S.fixes.topics).length; }
+
 /* ---------- drawing ---------- */
 function pool(){ return S.mode === "sprint" ? SEEDS.topics : SEEDS.papers; }
 function deckFor(){ return S.mode === "sprint" ? P.shapes : P.lenses; }
@@ -339,8 +377,8 @@ function eligible(){
   var seen = {}, now = Date.now();
   S.log.forEach(function(e){ if(blocked(e, now)) seen[e.t] = 1; });
   var p = pool().filter(function(x){ return !seen[x.t]; });
-  if(S.mode === "paper" && S.easy){
-    var easy = p.filter(function(x){ return (x.a == null ? 1 : x.a) >= 2; });
+  if(S.easy){
+    var easy = p.filter(function(x){ return score(x) >= EASY_MIN[S.mode]; });
     if(easy.length) p = easy;
   }
   var known = {};
@@ -397,6 +435,7 @@ function renderCard(animate){
   h += '<h1 class="title">' + esc(it.t) + "</h1>";
   if(!isPaper && it.b) h += '<p class="deck">' + esc(it.b) + "</p>";
   h += '<p class="meta">' + meta + "</p>";
+  h += renderRating(c);
   h += '<p class="extract">' + esc(it.x) + "</p>";
   h += '<div class="angle"><span class="lbl">' + (isPaper ? "Read it for this" : "Your angle") + "</span>";
   h += "<p>" + esc(c.shape.p) + "</p></div>";
@@ -443,6 +482,45 @@ function renderCard(animate){
   if($("invite")) $("invite").onclick = invite;
   if($("print")) $("print").onclick = function(){ window.print(); };
   if($("askai")) $("askai").onclick = askAI;
+  wireRating(c);
+}
+
+// "Date-night rating 2/3 · reports its own data · fix" under the meta line, and its editor.
+function renderRating(c){
+  var it = c.item, sc = SCORES[S.mode], v = score(it), fixed = !!S.fixes[kindOf(S.mode)][keyOf(it.t)];
+  var h = '<p class="rating"><span>' + sc.name + " " + v + "/3 &mdash; " + esc(sc.n[v].toLowerCase()) + "</span>";
+  if(S.mode === "paper") h += "<span>&middot; " + (it.e === 0 ? "theory, model or method" : "reports its own data") + "</span>";
+  if(fixed) h += "<span>&middot; corrected here</span>";
+  h += '<button class="linkish" id="fixbtn" aria-expanded="' + !!c.fixing + '">' + (c.fixing ? "done" : "fix this") + "</button></p>";
+  if(!c.fixing) return h;
+  h += '<div class="fixer"><div class="field"><span class="lbl">' + sc.name + '</span><div class="seg" role="group">';
+  sc.n.forEach(function(n, i){
+    h += '<button data-score="' + i + '" aria-pressed="' + (i === v) + '" title="' + esc(n) + '">' + i + " &middot; " + esc(n) + "</button>";
+  });
+  h += '</div></div><div class="row"><div class="field"><span class="lbl">Area</span><select id="fixdom">';
+  SEEDS.domains.forEach(function(d){
+    h += '<option' + (d === it.d ? " selected" : "") + ">" + esc(d) + "</option>";
+  });
+  h += "</select></div>";
+  if(S.mode === "paper"){
+    h += '<div class="field"><span class="lbl">Kind of paper</span><div class="seg" role="group">'
+      + '<button data-e="1" aria-pressed="' + (it.e !== 0) + '">Reports its own data</button>'
+      + '<button data-e="0" aria-pressed="' + (it.e === 0) + '">Theory, model or method</button></div></div>';
+  }
+  h += "</div></div>";
+  return h;
+}
+function wireRating(c){
+  var it = c.item, f = SCORES[S.mode].f;
+  $("fixbtn").onclick = function(){ c.fixing = !c.fixing; renderCard(false); };
+  if(!c.fixing) return;
+  [].forEach.call(document.querySelectorAll("[data-score]"), function(b){
+    b.onclick = function(){ var o = {}; o[f] = +b.dataset.score; setFix(it, S.mode, o); renderCard(false); };
+  });
+  [].forEach.call(document.querySelectorAll("[data-e]"), function(b){
+    b.onclick = function(){ setFix(it, S.mode, { e:+b.dataset.e }); renderCard(false); };
+  });
+  $("fixdom").onchange = function(){ setFix(it, S.mode, { d:this.value }); renderCard(false); };
 }
 
 function renderHandout(){
@@ -562,6 +640,11 @@ function record(kind, why){
   S.log.unshift(e);
   S.log = S.log.slice(0,300);
   if(why === "known") learnKnown(e.d);
+  // "Looks thin" is a rating correction too: one step down, exported with the other fixes.
+  if(why === "thin"){
+    var o = {}; o[SCORES[S.mode].f] = Math.max(0, score(c.item) - 1);
+    setFix(c.item, S.mode, o);
+  }
   renderLog(); saveLocal();
   if(DB) DB.collection("sessions").doc().set(e).catch(function(){});
 }
@@ -584,6 +667,7 @@ function renderLog(){
     : "nothing yet";
   $("clearlog").hidden = !S.log.length;
   $("exportlog").hidden = !S.log.length;
+  $("exportfixes").hidden = !fixCount();
   if(!S.log.length){
     body.innerHTML = '<p class="empty">Sessions you finish land here, and stop coming up again. '
       + 'Passed cards come back after a while.</p>';
@@ -603,25 +687,38 @@ function renderLog(){
   body.innerHTML = h;
 }
 
-function exportLog(){
-  var blob = new Blob([JSON.stringify({ app:"cold-open", exported:new Date().toISOString(),
-    known:S.known, log:S.log }, null, 1)], { type:"application/json" });
+function download(name, obj){
+  var blob = new Blob([JSON.stringify(obj, null, 1)], { type:"application/json" });
   var a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "cold-open-log-" + new Date().toISOString().slice(0,10) + ".json";
+  a.download = name + "-" + new Date().toISOString().slice(0,10) + ".json";
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+}
+function exportLog(){
+  download("cold-open-log", { app:"cold-open", exported:new Date().toISOString(),
+    known:S.known, log:S.log, fixes:S.fixes });
+}
+// For the repo: node tools/enrich.mjs cold-open-fixes-<date>.json
+function exportFixes(){
+  download("cold-open-fixes", { app:"cold-open", exported:new Date().toISOString(), fixes:S.fixes });
 }
 function importLog(file){
   var rd = new FileReader();
   rd.onload = function(){
     try{
-      var o = JSON.parse(rd.result), list = Array.isArray(o) ? o : o.log;
-      if(!Array.isArray(list)) throw 0;
-      var before = S.log.length;
+      var o = JSON.parse(rd.result), list = Array.isArray(o) ? o : (o.log || []);
+      if(!Array.isArray(list) || (!list.length && !o.fixes)) throw 0;
+      var before = S.log.length, nfix = 0;
       mergeLog(list);
+      if(o.fixes) ["papers", "topics"].forEach(function(kind){
+        Object.keys(o.fixes[kind] || {}).forEach(function(k){
+          S.fixes[kind][k] = Object.assign(S.fixes[kind][k] || {}, o.fixes[kind][k]); nfix++;
+        });
+      });
+      applyFixes();
       renderLog(); saveLocal();
-      S.notice = "Imported " + (S.log.length - before) + " new log entries.";
+      S.notice = "Imported " + (S.log.length - before) + " new log entries and " + nfix + " rating fixes.";
     }catch(e){ S.notice = "That file isn't a Cold Open log export."; }
     renderCard(false);
   };
@@ -734,6 +831,8 @@ function setMode(m){
   $("tab-sprint").setAttribute("aria-selected", String(m === "sprint"));
   $("tab-paper").setAttribute("aria-selected", String(m === "paper"));
   $("l-min").textContent = m === "sprint" ? "Research clock" : "Reading clock";
+  $("l-easy").textContent = m === "sprint" ? "Subjects" : "Papers";
+  $("easy-on").innerHTML = m === "sprint" ? "Talkable &mdash; five minutes in it" : "Date night &mdash; anyone can follow";
   [].forEach.call(document.querySelectorAll(".paperonly"), function(el){ el.hidden = m !== "paper"; });
   setMins(S.mins[m]);
   saveSettings();
@@ -768,19 +867,23 @@ if(!SEEDS){
   return;
 }
 loadLocal();
+applyFixes();
 renderChips();
 setFam(S.fam);
 setEasy(S.easy);
 setTalk(S.talk);
 setMode(S.mode);
 renderLog();
-var easyN = SEEDS.papers.filter(function(x){ return (x.a == null ? 1 : x.a) >= 2; }).length;
-$("foot").innerHTML = nf(SEEDS.topics.length) + " subjects and " + nf(SEEDS.papers.length)
-  + " open-access papers in the deck (" + nf(easyN) + " marked date-night friendly), with "
+function easyCount(list, mode){
+  return list.filter(function(x){ return score(x, mode) >= EASY_MIN[mode]; }).length;
+}
+$("foot").innerHTML = nf(SEEDS.topics.length) + " subjects (" + nf(easyCount(SEEDS.topics, "sprint"))
+  + " talkable) and " + nf(SEEDS.papers.length) + " open-access papers ("
+  + nf(easyCount(SEEDS.papers, "paper")) + " date-night friendly), with "
   + P.shapes.length + " angles and " + P.lenses.length + " reading lenses.<br>"
-  + "Subjects come from Wikipedia&rsquo;s unusual-articles "
-  + "list and its featured articles; papers from eLife, PLOS, the Royal Society, PNAS, "
-  + "Psychological Science and others.";
+  + "Subjects come from Wikipedia&rsquo;s unusual and featured articles and its science categories; "
+  + "papers from eLife, PLOS, the Royal Society, PNAS, Psychological Science, "
+  + "open-access humanities journals and others.";
 
 $("deal").onclick = draw;
 $("tab-sprint").onclick = function(){ setMode("sprint"); };
@@ -811,6 +914,7 @@ $("clearlog").onclick = function(){
   }).catch(function(){});
 };
 $("exportlog").onclick = exportLog;
+$("exportfixes").onclick = exportFixes;
 $("importlog").onclick = function(){ $("importfile").click(); };
 $("importfile").onchange = function(){
   if(this.files && this.files[0]) importLog(this.files[0]);
