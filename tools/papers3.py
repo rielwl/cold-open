@@ -1,22 +1,10 @@
 # -*- coding: utf-8 -*-
-import json, os, re, time, urllib.parse, urllib.request, threading
+import json, urllib.parse, re, threading
 from concurrent.futures import ThreadPoolExecutor
-
-# Contact for OpenAlex's polite pool. Optional: set CONTACT_EMAIL to add yours.
-MAIL = os.environ.get("CONTACT_EMAIL", "")
-MAILTO = ("&mailto=" + urllib.parse.quote(MAIL)) if MAIL else ""
-# Optional free key from openalex.org: 10x the keyless daily budget.
-KEY = ("&api_key=" + os.environ["OPENALEX_API_KEY"]) if os.environ.get("OPENALEX_API_KEY") else ""
-UA = {"User-Agent": "TopicSeedBuilder/1.0 (https://github.com/rielwl/cold-open)"}
+from web import get_json, OPENALEX_AUTH
 
 def get(url):
-    for a in range(4):
-        try:
-            with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=45) as r:
-                return json.load(r)
-        except Exception:
-            if a == 3: return None
-            time.sleep(1.5*(a+1))
+    return get_json(url, tries=4, timeout=45)
 
 FIELD2DOM = {
  "Biochemistry, Genetics and Molecular Biology":"Life & evolution",
@@ -64,7 +52,7 @@ def deabstract(inv):
 lock = threading.Lock(); allout = []
 
 def do_journal(jname):
-    d = get("https://api.openalex.org/sources?search=" + urllib.parse.quote(jname) + f"&per-page=1{MAILTO}{KEY}")
+    d = get("https://api.openalex.org/sources?search=" + urllib.parse.quote(jname) + f"&per-page=1{OPENALEX_AUTH}")
     if not d or not d.get("results"): return
     sid = d["results"][0]["id"].split("/")[-1]; disp = d["results"][0]["display_name"]
     got, cursor = [], "*"
@@ -72,7 +60,7 @@ def do_journal(jname):
         url = ("https://api.openalex.org/works?filter="
                f"primary_location.source.id:{sid},is_oa:true,type:article,"
                "cited_by_count:>40,from_publication_date:2004-01-01"
-               f"&sort=cited_by_count:desc&per-page=200&cursor={cursor}{MAILTO}{KEY}")
+               f"&sort=cited_by_count:desc&per-page=200&cursor={cursor}{OPENALEX_AUTH}")
         r = get(url)
         if not r or not r.get("results"): break
         for w in r["results"]:

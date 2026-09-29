@@ -329,7 +329,7 @@ html[data-preview="handout"] .handout{display:block;padding:16mm 0}
   </section>
 
   <main>
-    <article id="card" class="is-empty" aria-live="polite" aria-label="Dealt card">
+    <article id="card" class="is-empty" role="tabpanel" aria-labelledby="tab-sprint" aria-live="polite">
       <div><div class="empty-t">Nothing in the post yet.</div><div class="empty-s">Press Deal and a card arrives here.</div></div>
     </article>
   </main>
@@ -521,7 +521,8 @@ function blocked(e, now){
 // nothing, so Deal always deals something.
 function eligible(){
   var seen = {}, now = Date.now();
-  S.log.forEach(function(e){ if(blocked(e, now)) seen[e.t] = 1; });
+  // Titles are unique within a mode, not across both; entries without a mode count for both.
+  S.log.forEach(function(e){ if((!e.m || e.m === S.mode) && blocked(e, now)) seen[e.t] = 1; });
   if(S.card) seen[S.card.item.t] = 1;
   var p = pool().filter(function(x){ return !seen[x.t]; });
   if(!p.length) return pool();
@@ -878,6 +879,7 @@ function syncSettings(){
   $("tab-sprint").setAttribute("aria-selected", String(sp));
   $("tab-paper").setAttribute("aria-selected", String(!sp));
   $("tab-sprint").tabIndex = sp ? 0 : -1; $("tab-paper").tabIndex = sp ? -1 : 0;
+  $("card").setAttribute("aria-labelledby", "tab-" + S.mode);
   if(!S.known.length) S.fam = "any";
   press([$("fam-far"), $("fam-any"), $("fam-close")], function(b){ return b.id === "fam-" + S.fam; });
   $("fam-far").disabled = $("fam-close").disabled = !S.known.length;

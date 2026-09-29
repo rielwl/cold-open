@@ -1,9 +1,9 @@
-// Run with: node --test tools/lib.test.mjs
+// Run with: node --test tools/*.test.mjs
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { ROOT, key, clip, deabstract, pageCount } from "./lib.mjs";
+import { ROOT, key, clip, deabstract, pageCount, getJSON, isRetryable, redact } from "./lib.mjs";
 
 test("key() matches keyOf() in index.html, so ratings and fixes line up", () => {
   const html = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
@@ -36,4 +36,20 @@ test("pageCount() keeps plausible page ranges only", () => {
   assert.equal(pageCount({ first_page: "5", last_page: "5" }), 0);
   assert.equal(pageCount({ first_page: "1", last_page: "400" }), 0);
   assert.equal(pageCount(null), 0);
+});
+
+test("getJSON() retries only what could succeed next time", async () => {
+  assert.ok(isRetryable(undefined) && isRetryable(429) && isRetryable(503));
+  assert.ok(!isRetryable(404) && !isRetryable(400));
+  let calls = 0;
+  const notFound = async () => { calls++; return { ok: false, status: 404 }; };
+  assert.equal(await getJSON("https://example.org/x", {}, notFound), null);
+  assert.equal(calls, 1);
+  const found = async () => ({ ok: true, json: async () => ({ hello: 1 }) });
+  assert.deepEqual(await getJSON("https://example.org/x", {}, found), { hello: 1 });
+});
+
+test("redact() hides credentials in logged URLs", () => {
+  assert.equal(redact("https://api.openalex.org/works?per-page=5&mailto=a%40b.c&api_key=SECRET&filter=x"),
+    "https://api.openalex.org/works?per-page=5&mailto=…&api_key=…&filter=x");
 });

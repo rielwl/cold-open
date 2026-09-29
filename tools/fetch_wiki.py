@@ -1,20 +1,11 @@
-import json, re, time, urllib.parse, urllib.request
-
-UA = {"User-Agent": "TopicSeedBuilder/1.0 (personal research-sprint app)"}
-API = "https://en.wikipedia.org/w/api.php?"
+import json, re, sys
+from web import wiki
 
 def api(**params):
-    params.setdefault("format", "json")
-    params.setdefault("formatversion", "2")
-    req = urllib.request.Request(API + urllib.parse.urlencode(params), headers=UA)
-    for attempt in range(4):
-        try:
-            with urllib.request.urlopen(req, timeout=40) as r:
-                return json.load(r)
-        except Exception as e:
-            if attempt == 3:
-                raise
-            time.sleep(2 * (attempt + 1))
+    d = wiki(tries=4, timeout=40, wait=lambda a: 2 * (a + 1), **params)
+    if d is None:
+        sys.exit("Wikipedia didn't answer; nothing written. Try again later.")
+    return d
 
 # ---------- Pool A: unusual articles ----------
 d = api(action="parse", page="Wikipedia:Unusual_articles", prop="links")

@@ -25,8 +25,8 @@ Read `README.md` for what the app is and `NEXT-STEPS.md` for where it stands.
   a rating; editing the .tsv by hand also works (one row per key; enrich warns
   about duplicates, and the later row wins).
 - `tools/lib.mjs` holds what `enrich.mjs` and `extend.mjs` share (corpus
-  read/write, the fetch helper, OpenAlex auth, `key()`). The Python scripts are
-  the original pipeline and are left as they were.
+  read/write, the fetch helper, OpenAlex auth, `key()`); `tools/web.py` does the
+  same for the Python scripts (fetch with retries, Wikipedia API, OpenAlex auth).
 
 ## Labelling new cards
 
@@ -61,10 +61,12 @@ analysis" as easy reading). Append rows, then re-run `node tools/enrich.mjs`.
 
 ## Checking a change
 
-`node --test tools/lib.test.mjs` covers the tools' shared helpers and checks
-that `keyOf()` still matches `key()`. The app itself has no automated tests.
-Serve the folder (`npx serve .` or
-`python -m http.server`), then in a browser: deal in both modes, start and stop
+`node --test tools/*.test.mjs` runs on every push and pull request
+(`.github/workflows/test.yml`, separate from the deploy). It checks that
+`keyOf()` still matches `key()`, that the app script parses, that every file the
+page loads is in the deploy's copy step, and the shape of `prompts.js` and
+`corpus.js`. It doesn't drive the UI, so check that by hand: serve the folder
+(`npx serve .` or `python -m http.server`), then in a browser: deal in both modes, start and stop
 the clock, re-deal mid-clock, pass with a reason, correct a rating with "fix
 this" (it should survive a reload), and preview the print handout
 (Paper mode, Print handout; or set `document.documentElement.dataset.preview =
