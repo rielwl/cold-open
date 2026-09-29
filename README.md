@@ -31,10 +31,9 @@ It's a static page. Open `index.html` in a browser, or serve the folder:
 npx serve .              # or: python -m http.server 8000
 ```
 
-The page has some dormant code for running inside the Claude artifact viewer (a
-**Sharpen it / Reading notes** button that asks Claude for threads to chase). It
-relies on `window.claude`, which only exists there, so on GitHub Pages and
-locally the button simply doesn't render and exports use a normal download.
+The look is "Airmail": every card is an airmail letter with a stamp and a
+postmark. The design spec (tokens, type scale, component states) is in
+[docs/airmail-design.md](docs/airmail-design.md).
 
 ## How it's put together
 
