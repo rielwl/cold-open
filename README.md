@@ -4,9 +4,10 @@ A machine that deals you something to be curious about, then starts a clock.
 
 Two modes:
 
-- **Sprint (solo)** — draws an unfamiliar subject plus one of 20 *angles* you're
-  required to take. Research it against the clock, then give a talk of under five
-  minutes. **Talkable** (on by default) skips subjects too thin to fill five minutes.
+- **Sprint (solo)** — draws an unfamiliar subject plus five *guiding questions*,
+  one for each card of your talk (what it is, how it works, why it matters, the
+  twist, what's still open). Research it against the clock, then give a talk of
+  under five minutes. **Talkable** (on by default) skips subjects too thin to fill five minutes.
 - **Paper (two of you)** — draws an open-access paper plus one of 12 *reading
   lenses*, so you each read for something specific rather than nodding along.
   **Date night** (on by default) sticks to papers two non-specialists can follow.
@@ -42,7 +43,7 @@ locally the button simply doesn't render and exports use a normal download.
   move it between browsers or devices.
 - `corpus.js` — the deck, as a single `window.SEEDS` object (~5 MB). Committed
   deliberately: the app has no network access at runtime, so the data ships with it.
-- `prompts.js` — the Sprint angles and Paper lenses, as plain data. Edit and
+- `prompts.js` — the Sprint guiding questions and Paper lenses, as plain data. Edit and
   reload; no rebuild.
 - `tools/` — the scripts that build `corpus.js` from live sources, plus
   `paper_ratings.tsv` (below).

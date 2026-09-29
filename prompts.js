@@ -1,28 +1,54 @@
-// The angles (Sprint) and reading lenses (Paper). Plain data: add a line, reload.
-// A lens with needs:"data" is only dealt for papers that report their own
+// Sprint guiding questions and Paper reading lenses. Plain data: add a line, reload.
+//
+// Sprint: each card gets one question from each group, in order, so every set
+// runs what-is-it -> how -> why it matters -> the twist -> what's open. Five
+// questions, one per talk card. Questions must work for any subject: a person,
+// a place, a species, a machine, an idea.
+//
+// Paper: a lens with needs:"data" is only dealt for papers that report their own
 // measurements, so "find the effect size" never lands on a theory paper.
 window.PROMPTS = {
-shapes: [
- {n:"The mechanism", p:"How does this actually work, step by step? Push until you hit the part that still isn't understood."},
- {n:"The turn", p:"This was standard, and then it abruptly wasn't. What changed, who resisted, and who was right?"},
- {n:"The wrong number", p:"Something here was measured, accepted, and later found wrong. How was it caught?"},
- {n:"Convergent solutions", p:"Find somewhere else — another field, species, or century — that solved this the same way, independently."},
- {n:"The edge case", p:"Where does this break down? The failure mode usually defines the thing better than the success case."},
- {n:"Who benefits", p:"Follow the incentives. Who gained from it being this way, and who paid for it?"},
- {n:"The stubborn one", p:"This exists because somebody refused to let it go. Tell it from their side."},
- {n:"Scale it", p:"What happens at a thousand times bigger, or smaller? Find what stops working and why."},
- {n:"The open question", p:"Go straight to what nobody can explain yet, and lay out the best current guesses fairly."},
- {n:"Before and after", p:"Reconstruct, honestly and without smugness, what people believed immediately before this."},
- {n:"The trade-off", p:"Nothing came free. What was given up to get this, and was it worth it?"},
- {n:"The accident", p:"Find the unintended consequence, the mistake, or the side effect that mattered more than the plan."},
- {n:"How do we even know", p:"Interrogate the method, not the claim. What would you have to trust to believe this?"},
- {n:"The near miss", p:"There was a version of this that almost happened instead. Why didn't it?"},
- {n:"Borrowed", p:"Trace this back to the completely unrelated field it was lifted from."},
- {n:"The boring part", p:"Find the unglamorous thing everything else quietly depends on."},
- {n:"The money", p:"Who paid for this, what did it cost, and what did the money buy that nothing else could?"},
- {n:"The rival", p:"Find the competing idea, person or design that lost. Make the strongest case that it should have won."},
- {n:"Ask a child", p:"Answer the question a curious ten-year-old would ask first — the one experts skip because it seems too obvious."},
- {n:"The object", p:"Build the talk around one physical thing you could hold up: a tool, a specimen, a document, a part."}
+questions: [
+ {g:"Ground it", q:[
+  "What is it, in one sentence a friend would understand?",
+  "Where and when does it sit? What's the one fact that places it?",
+  "If you could hold up one picture or object for it, what would it be?",
+  "What would people most likely confuse it with, and how is it different?",
+  "Who or what are the main players involved?",
+  "Where does the name come from, and does it fit?"
+ ]},
+ {g:"How it works", q:[
+  "How does it actually work, step by step?",
+  "How did it come about? What happened first, and what made the rest follow?",
+  "What had to be true for it to exist at all?",
+  "What changed it over time, and what stayed the same?",
+  "How do we know what we know about it, and how good is that evidence?",
+  "What's the one decision or mechanism everything else depends on?"
+ ]},
+ {g:"Why it matters", q:[
+  "Why should anyone who isn't an expert care?",
+  "Who gained from it, and who paid for it?",
+  "What would be different if it had never existed or happened?",
+  "What did it replace, or what replaced it?",
+  "Where does it touch everyday life, even indirectly?",
+  "What did it cost, in money, lives, time or effort, and was it worth it?"
+ ]},
+ {g:"The twist", q:[
+  "What's the most surprising thing you found?",
+  "What do most people believe about it that turns out to be wrong?",
+  "What went wrong, nearly went wrong, or had an effect nobody planned?",
+  "What's the strangest detail you'd tell a friend first?",
+  "Where does it connect to something completely unrelated?",
+  "Who is the unexpected person in this story, and what did they do?"
+ ]},
+ {g:"What's open", q:[
+  "What's still unknown, disputed or unresolved?",
+  "What would you ask an expert if you had five minutes with them?",
+  "Where do your sources disagree, and which do you believe?",
+  "What happens next? Where is it heading?",
+  "What would change your mind about the main thing you've learned?",
+  "If you had another hour, what would you chase?"
+ ]}
 ],
 lenses: [
  {n:"What would have changed their mind", p:"Find the result that would have falsified this. Did they go looking for it?"},
