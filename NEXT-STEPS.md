@@ -52,7 +52,7 @@ angle.
 ## Picking it back up
 
 1. **Deploying is `git push` to `main`.** GitHub Actions publishes the page; see
-   the Actions tab if it doesn't update. The old Claude artifact copy is frozen.
+   the Actions tab if it doesn't update.
 2. **Usual update loop:** `node tools/extend.mjs` (optional, adds cards), label
    anything new (AGENTS.md), `node tools/enrich.mjs [fixes.json]`, commit.
 3. **Python isn't installed** on the Windows machine this was last worked on; the
