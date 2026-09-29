@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-import json, re, time, urllib.parse, urllib.request
-UA = {"User-Agent":"TopicSeedBuilder/1.0 (personal research app; low volume)"}
-API = "https://en.wikipedia.org/w/api.php?"
+import json, re, time
+from web import wiki
 
 SUBS = {
  "Science":"Wildcard", "Death":"Wildcard",
@@ -14,16 +13,10 @@ SUBS = {
  "Society, economy and law":"Society, law & money",
 }
 
+# These subpages are big and the API sometimes times out on them, so keep trying for a few minutes.
 def patient(page):
-    url = API + urllib.parse.urlencode({"action":"parse","page":page,"prop":"wikitext",
-                                        "format":"json","formatversion":"2"})
-    for a in range(20):
-        try:
-            with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=40) as r:
-                return json.load(r).get("parse",{}).get("wikitext","")
-        except Exception:
-            time.sleep(12)
-    return ""
+    d = wiki(tries=20, timeout=40, wait=lambda a: 12, action="parse", page=page, prop="wikitext")
+    return (d or {}).get("parse",{}).get("wikitext","")
 
 def clean(s):
     s = re.sub(r"<ref[^>]*>.*?</ref>", "", s, flags=re.S)

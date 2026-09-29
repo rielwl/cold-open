@@ -1,20 +1,7 @@
 # -*- coding: utf-8 -*-
-import json, re, time, urllib.parse, urllib.request
+import json, re
 from concurrent.futures import ThreadPoolExecutor
-
-UA = {"User-Agent": "TopicSeedBuilder/1.0 (personal research app)"}
-API = "https://en.wikipedia.org/w/api.php?"
-
-def api(**p):
-    p.setdefault("format","json"); p.setdefault("formatversion","2")
-    url = API + urllib.parse.urlencode(p)
-    for a in range(3):
-        try:
-            with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=35) as r:
-                return json.load(r)
-        except Exception:
-            time.sleep(1.5*(a+1))
-    return None
+from web import wiki, wiki_pages
 
 SEEDCATS = {
  "Chemistry & materials": ["Chemistry","Chemical elements","Chemical compounds","Materials science",
@@ -34,7 +21,7 @@ def members(cat, kinds="page"):
         kw = dict(action="query", list="categorymembers", cmtitle="Category:"+cat,
                   cmlimit="500", cmnamespace="0" if kinds=="page" else "14")
         if cont: kw["cmcontinue"] = cont
-        d = api(**kw)
+        d = wiki(**kw)
         if not d: break
         out += [m["title"] for m in d.get("query",{}).get("categorymembers",[])]
         cont = d.get("continue",{}).get("cmcontinue")
@@ -60,22 +47,10 @@ BAD = re.compile(r"^(List of|Lists of|Index of|Outline of|Timeline of|Glossary o
 allt = sorted({t for ts in pools.values() for t in ts if not BAD.search(t)})
 print("hydrating", len(allt), flush=True)
 
-def fetch(batch):
-    q = urllib.parse.urlencode({"action":"query","format":"json","formatversion":"2",
-        "titles":"|".join(batch),"prop":"extracts|info","exintro":1,"explaintext":1,
-        "inprop":"url","redirects":1})
-    for a in range(3):
-        try:
-            with urllib.request.urlopen(urllib.request.Request(API+q, headers=UA), timeout=35) as r:
-                return json.load(r).get("query",{}).get("pages",[])
-        except Exception:
-            time.sleep(1.5*(a+1))
-    return []
-
 hyd = {}
 batches = [allt[i:i+20] for i in range(0,len(allt),20)]
 with ThreadPoolExecutor(max_workers=8) as ex:
-    for pages in ex.map(fetch, batches):
+    for pages in ex.map(wiki_pages, batches):
         for p in pages:
             if p.get("missing") or "extract" not in p: continue
             hyd[p["title"]] = {"extract":p["extract"],"length":p.get("length",0),"url":p.get("fullurl","")}
