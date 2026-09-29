@@ -20,7 +20,9 @@ import { fileURLToPath } from "node:url";
 
 const TOOLS = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.dirname(TOOLS);
-const MAIL = "23545713+rielwl@users.noreply.github.com";
+// Contact for the APIs' polite pools. Optional: set CONTACT_EMAIL to add yours.
+const MAIL = process.env.CONTACT_EMAIL || "";
+const MAILTO = MAIL ? "&mailto=" + encodeURIComponent(MAIL) : "";
 // Optional free key from openalex.org: 10x the keyless daily budget.
 const KEY = process.env.OPENALEX_API_KEY ? "&api_key=" + process.env.OPENALEX_API_KEY : "";
 const CACHE = path.join(TOOLS, "openalex_cache.json");
@@ -89,15 +91,15 @@ const todo = corpus.papers.filter(p => !(key(p.t) in cache))
 console.log(`OpenAlex: ${Object.keys(cache).length} cached, ${todo.length} to fetch`);
 
 for(const batch of chunks(todo.filter(x => x.id.pmc), 150)){
-  const j = await getJSON("https://pmc.ncbi.nlm.nih.gov/tools/idconv/api/v1/articles/?format=json&tool=coldopen&email="
-    + MAIL + "&ids=" + batch.map(x => x.id.pmc).join(","));
+  const j = await getJSON("https://pmc.ncbi.nlm.nih.gov/tools/idconv/api/v1/articles/?format=json&tool=coldopen"
+    + (MAIL ? "&email=" + encodeURIComponent(MAIL) : "") + "&ids=" + batch.map(x => x.id.pmc).join(","));
   const doi = {};
   for(const r of (j && j.records) || []) if(r.doi) doi[r.pmcid] = r.doi;
   for(const x of batch) x.id = doi[x.id.pmc] ? { doi: doi[x.id.pmc] } : null;
 }
 for(const batch of chunks(todo.filter(x => x.id && x.id.doi), 50)){
-  const j = await getJSON("https://api.openalex.org/works?per-page=50&select=doi,biblio,best_oa_location&mailto="
-    + MAIL + KEY + "&filter=doi:" + batch.map(x => encodeURIComponent(x.id.doi)).join("|"));
+  const j = await getJSON("https://api.openalex.org/works?per-page=50&select=doi,biblio,best_oa_location"
+    + MAILTO + KEY + "&filter=doi:" + batch.map(x => encodeURIComponent(x.id.doi)).join("|"));
   if(!j) continue;
   const byDoi = {};
   for(const w of j.results || []) byDoi[(w.doi || "").replace("https://doi.org/", "").toLowerCase()] = w;

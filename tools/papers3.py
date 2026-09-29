@@ -2,10 +2,12 @@
 import json, os, re, time, urllib.parse, urllib.request, threading
 from concurrent.futures import ThreadPoolExecutor
 
-MAIL = "23545713+rielwl@users.noreply.github.com"
+# Contact for OpenAlex's polite pool. Optional: set CONTACT_EMAIL to add yours.
+MAIL = os.environ.get("CONTACT_EMAIL", "")
+MAILTO = ("&mailto=" + urllib.parse.quote(MAIL)) if MAIL else ""
 # Optional free key from openalex.org: 10x the keyless daily budget.
 KEY = ("&api_key=" + os.environ["OPENALEX_API_KEY"]) if os.environ.get("OPENALEX_API_KEY") else ""
-UA = {"User-Agent": f"TopicSeedBuilder/1.0 (mailto:{MAIL})"}
+UA = {"User-Agent": "TopicSeedBuilder/1.0 (https://github.com/rielwl/cold-open)"}
 
 def get(url):
     for a in range(4):
@@ -62,7 +64,7 @@ def deabstract(inv):
 lock = threading.Lock(); allout = []
 
 def do_journal(jname):
-    d = get("https://api.openalex.org/sources?search=" + urllib.parse.quote(jname) + f"&per-page=1&mailto={MAIL}{KEY}")
+    d = get("https://api.openalex.org/sources?search=" + urllib.parse.quote(jname) + f"&per-page=1{MAILTO}{KEY}")
     if not d or not d.get("results"): return
     sid = d["results"][0]["id"].split("/")[-1]; disp = d["results"][0]["display_name"]
     got, cursor = [], "*"
@@ -70,7 +72,7 @@ def do_journal(jname):
         url = ("https://api.openalex.org/works?filter="
                f"primary_location.source.id:{sid},is_oa:true,type:article,"
                "cited_by_count:>40,from_publication_date:2004-01-01"
-               f"&sort=cited_by_count:desc&per-page=200&cursor={cursor}&mailto={MAIL}{KEY}")
+               f"&sort=cited_by_count:desc&per-page=200&cursor={cursor}{MAILTO}{KEY}")
         r = get(url)
         if not r or not r.get("results"): break
         for w in r["results"]:
