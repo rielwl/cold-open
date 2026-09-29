@@ -380,6 +380,12 @@ var KEY = "coldopen.v1";
 var BANDS = ["brief article", "moderate article", "substantial article", "very long article"];
 var DAY = 864e5;
 var MON = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+var LOG_MAX = 300;        // entries kept in storage and exports
+var LOG_SHOWN = 40;       // entries listed on the page
+var RECENT_LENSES = 4;    // lenses not repeated within this many paper deals
+var SPRINT_TALK_MINS = 5; // the CARDS and PRESENT phases; the talk is "under five minutes"
+var MAX_MINS = 180;       // matches max= on the minute inputs
+var NOTE_LINES = 10;      // ruled lines on the handout
 // Why a card was passed, and how long before it can come back.
 var REASONS = [
   {k:"known", n:"Already know it", days:180},
@@ -398,29 +404,33 @@ var EMPTY = '<div><div class="empty-t">Nothing in the post yet.</div>'
   + '<div class="empty-s">Press Deal and a card arrives here.</div></div>';
 
 var S = { mode:"sprint", fam:"any", known:[], mins:{sprint:25,paper:30}, talk:30, easy:true,
-          card:null, log:[], recent:[], notice:"", fixes:{ papers:{}, topics:{} } };
+          card:null, log:[], recentQuestions:[], recentLenses:[], notice:"", fixes:{ papers:{}, topics:{} } };
 var noticeId = null;
 
 /* ---------- persistence ---------- */
+function clampMins(v, dflt){ return Math.max(1, Math.min(MAX_MINS, parseInt(v, 10) || dflt)); }
 function loadLocal(){
   try{
     var raw = localStorage.getItem(KEY);
     if(!raw) return;
     var o = JSON.parse(raw);
-    if(o.fam) S.fam = o.fam;
+    if(["far","any","close"].indexOf(o.fam) > -1) S.fam = o.fam;
     if(Array.isArray(o.known)) S.known = o.known;
-    if(o.mins) S.mins = Object.assign(S.mins, o.mins);
-    if(o.talk) S.talk = o.talk;
+    if(o.mins){
+      S.mins.sprint = clampMins(o.mins.sprint, S.mins.sprint);
+      S.mins.paper = clampMins(o.mins.paper, S.mins.paper);
+    }
+    if(o.talk) S.talk = clampMins(o.talk, S.talk);
     if(typeof o.easy === "boolean") S.easy = o.easy;
-    if(o.mode) S.mode = o.mode;
+    if(o.mode === "sprint" || o.mode === "paper") S.mode = o.mode;
     if(Array.isArray(o.log)) S.log = o.log;
-    if(o.fixes) S.fixes = { papers:o.fixes.papers || {}, topics:o.fixes.topics || {} };
+    if(o.fixes) S.fixes = { papers:cleanFixes(o.fixes.papers), topics:cleanFixes(o.fixes.topics) };
   }catch(e){}
 }
 function saveLocal(){
   try{
     localStorage.setItem(KEY, JSON.stringify({
-      fam:S.fam, known:S.known, mins:S.mins, talk:S.talk, easy:S.easy, mode:S.mode, log:S.log.slice(0,300), fixes:S.fixes
+      fam:S.fam, known:S.known, mins:S.mins, talk:S.talk, easy:S.easy, mode:S.mode, log:S.log.slice(0,LOG_MAX), fixes:S.fixes
     }));
   }catch(e){}
 }
@@ -432,7 +442,7 @@ function mergeLog(list){
     if(!byKey[k]) byKey[k] = e;
   });
   S.log = Object.keys(byKey).map(function(k){ return byKey[k]; })
-    .sort(function(a,b){ return (b.at||"").localeCompare(a.at||""); }).slice(0,300);
+    .sort(function(a,b){ return (b.at||"").localeCompare(a.at||""); }).slice(0,LOG_MAX);
 }
 
 /* ---------- rating fixes ----------
@@ -440,6 +450,24 @@ function mergeLog(list){
    hands them to tools/enrich.mjs, which folds them into the ratings files. */
 function keyOf(t){ return String(t).toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "").slice(0, 80); }
 function kindOf(mode){ return mode === "paper" ? "papers" : "topics"; }
+// Fixes come from storage and imported files, and are copied onto deck items,
+// so keep only the fields a fix may change, with values the UI could produce.
+function cleanFix(f){
+  var out = {};
+  if(!f || typeof f !== "object") return out;
+  ["a", "k"].forEach(function(n){ if([0, 1, 2, 3].indexOf(f[n]) > -1) out[n] = f[n]; });
+  if(SEEDS.domains.indexOf(f.d) > -1) out.d = f.d;
+  if(f.e === 0 || f.e === 1) out.e = f.e;
+  return out;
+}
+function cleanFixes(byKey){
+  var out = {};
+  Object.keys(byKey || {}).forEach(function(k){
+    var f = cleanFix(byKey[k]);
+    if(Object.keys(f).length) out[k] = f;
+  });
+  return out;
+}
 function applyFixes(){
   [["papers", SEEDS.papers], ["topics", SEEDS.topics]].forEach(function(pair){
     var fx = S.fixes[pair[0]];
@@ -451,7 +479,6 @@ function setFix(item, mode, fields){
   var kind = kindOf(mode), k = keyOf(item.t);
   S.fixes[kind][k] = Object.assign(S.fixes[kind][k] || {}, fields);
   Object.assign(item, fields);
-  saveLocal(); renderLog();
 }
 function score(x, mode){
   var v = x[SCORES[mode || S.mode].f];
@@ -465,19 +492,20 @@ function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 // Sprint: one guiding question per group, avoiding the ones on the last card.
 function sprintQuestions(){
   var qs = P.questions.map(function(g){
-    var fresh = g.q.filter(function(q){ return S.recent.indexOf(q) === -1; });
+    var fresh = g.q.filter(function(q){ return S.recentQuestions.indexOf(q) === -1; });
     return pick(fresh.length ? fresh : g.q);
   });
-  S.recent = qs.slice();
-  return { n:"Five questions", s:"Five questions", qs:qs };
+  S.recentQuestions = qs;
+  return { n:"Five questions", qs:qs };
 }
-// Paper: lenses that need measurements aren't dealt for theory, model or method papers.
+// Paper: lenses that need measurements aren't dealt for theory, model or method
+// papers, and the last few lenses aren't repeated.
 function paperLens(item){
   var deck = P.lenses.filter(function(l){ return !(l.needs === "data" && item.e === 0); });
-  var shape = pick(deck);
-  for(var i=0; i<12 && S.recent.indexOf(shape.n) !== -1; i++) shape = pick(deck);
-  S.recent.unshift(shape.n); S.recent = S.recent.slice(0,4);
-  return shape;
+  var fresh = deck.filter(function(l){ return S.recentLenses.indexOf(l.n) === -1; });
+  var lens = pick(fresh.length ? fresh : deck);
+  S.recentLenses = [lens.n].concat(S.recentLenses).slice(0, RECENT_LENSES);
+  return lens;
 }
 function reason(k){
   for(var i=0; i<REASONS.length; i++) if(REASONS[i].k === k) return REASONS[i];
@@ -489,24 +517,26 @@ function blocked(e, now){
   var r = reason(e.why), at = Date.parse(e.at);
   return isNaN(at) || now - at < (r ? r.days : 180) * DAY;
 }
+// The cards that can be dealt now. Each filter is skipped if it would leave
+// nothing, so Deal always deals something.
 function eligible(){
   var seen = {}, now = Date.now();
   S.log.forEach(function(e){ if(blocked(e, now)) seen[e.t] = 1; });
   if(S.card) seen[S.card.item.t] = 1;
   var p = pool().filter(function(x){ return !seen[x.t]; });
+  if(!p.length) return pool();
   if(S.easy){
     var easy = p.filter(function(x){ return score(x) >= EASY_MIN[S.mode]; });
     if(easy.length) p = easy;
   }
   var known = {};
   S.known.forEach(function(d){ known[d] = 1; });
-  var filtered = p;
+  var familiar = p;
   if(S.known.length && S.fam === "far")
-    filtered = p.filter(function(x){ return x.d === "Wildcard" || !known[x.d]; });
+    familiar = p.filter(function(x){ return x.d === "Wildcard" || !known[x.d]; });
   if(S.known.length && S.fam === "close")
-    filtered = p.filter(function(x){ return !!known[x.d]; });
-  if(filtered.length) return filtered;
-  return p.length ? p : pool();
+    familiar = p.filter(function(x){ return !!known[x.d]; });
+  return familiar.length ? familiar : p;
 }
 function draw(){
   stopClock();
@@ -533,7 +563,7 @@ function pad(n){ return (n < 10 ? "0" : "") + n; }
 function today(){ var d = new Date(); return pad(d.getDate()) + " " + MON[d.getMonth()] + " " + d.getFullYear(); }
 function areaName(d){ return d === "Wildcard" ? "unfiled" : d.toLowerCase(); }
 function serial(c){
-  var i = pool().indexOf(c.item) + 1;
+  var i = (c.mode === "sprint" ? SEEDS.topics : SEEDS.papers).indexOf(c.item) + 1;
   return (c.mode === "sprint" ? "SPR·" : "PPR·") + ("0000" + i).slice(-4);
 }
 function link(href, text){
@@ -652,7 +682,7 @@ function renderHandout(){
   h += "<section><h2>Afterwards, talk about</h2><ol>";
   (P.talk || []).forEach(function(t){ h += "<li>" + esc(t) + "</li>"; });
   h += "</ol></section>";
-  h += '<section class="h-notes"><h2>Notes</h2><div class="h-lines">' + new Array(11).join("<div></div>") + "</div></section>";
+  h += '<section class="h-notes"><h2>Notes</h2><div class="h-lines">' + new Array(NOTE_LINES + 1).join("<div></div>") + "</div></section>";
   h += '<div class="h-foot"><span>' + serial(c) + "</span><span>Read on paper. Talk it over.</span></div>";
   box.innerHTML = h;
 }
@@ -666,14 +696,14 @@ function inviteText(){
 }
 function invite(){
   var text = inviteText();
-  function shown(){
+  function showForManualCopy(){
     var box = document.querySelector("#card .copybox");
     box.textContent = text; box.hidden = false;
     notice("Couldn't copy here. The invite is below; select it and copy.");
   }
   if(navigator.clipboard && navigator.clipboard.writeText)
-    navigator.clipboard.writeText(text).then(function(){ notice("Invite copied. Paste it into a message."); }, shown);
-  else shown();
+    navigator.clipboard.writeText(text).then(function(){ notice("Invite copied. Paste it into a message."); }, showForManualCopy);
+  else showForManualCopy();
 }
 
 /* ---------- log ---------- */
@@ -683,7 +713,7 @@ function record(kind, why){
             k:kind, at:new Date().toISOString() };
   if(why) e.why = why;
   S.log.unshift(e);
-  S.log = S.log.slice(0,300);
+  S.log = S.log.slice(0,LOG_MAX);
   if(why === "known") learnKnown(e.d);
   // "Looks thin" is a rating correction too: one step down, exported with the other fixes.
   if(why === "thin"){
@@ -713,7 +743,7 @@ function renderLog(){
   $("exportlog").disabled = $("clearlog").disabled = !S.log.length;
   $("exportfixes").disabled = !fixCount();
   var h = "";
-  S.log.slice(0,40).forEach(function(e){
+  S.log.slice(0,LOG_SHOWN).forEach(function(e){
     var r = reason(e.why), status = e.k === "passed" ? "passed" + (r ? " · " + r.n.toLowerCase() : "") : "done";
     h += '<li class="logrow" data-status="' + (e.k === "passed" ? "passed" : "done") + '">'
        + '<span class="d">' + esc(shortDate(e.at)) + "</span>"
@@ -745,12 +775,13 @@ function importLog(file){
     var msg;
     try{
       var o = JSON.parse(rd.result), list = Array.isArray(o) ? o : (o.log || []);
-      if(!Array.isArray(list) || (!list.length && !o.fixes)) throw 0;
+      if(!Array.isArray(list) || (!list.length && !o.fixes)) throw new Error("not an export");
       var before = S.log.length, nfix = 0;
       mergeLog(list);
       if(o.fixes) ["papers", "topics"].forEach(function(kind){
-        Object.keys(o.fixes[kind] || {}).forEach(function(k){
-          S.fixes[kind][k] = Object.assign(S.fixes[kind][k] || {}, o.fixes[kind][k]); nfix++;
+        var incoming = cleanFixes(o.fixes[kind]);
+        Object.keys(incoming).forEach(function(k){
+          S.fixes[kind][k] = Object.assign(S.fixes[kind][k] || {}, incoming[k]); nfix++;
         });
       });
       applyFixes();
@@ -768,7 +799,7 @@ var T = null, tickId = null, AC = null;
 function phasesFor(){
   var m = S.mins[S.mode];
   return S.mode === "sprint"
-    ? [{n:"RESEARCH", s:m*60}, {n:"CARDS", s:5*60}, {n:"PRESENT", s:5*60}]
+    ? [{n:"RESEARCH", s:m*60}, {n:"CARDS", s:SPRINT_TALK_MINS*60}, {n:"PRESENT", s:SPRINT_TALK_MINS*60}]
     : [{n:"READ", s:m*60}, {n:"TALK", s:S.talk*60}];
 }
 function mmss(s){ s = Math.max(0, Math.round(s)); return pad(Math.floor(s/60)) + ":" + pad(s%60); }
@@ -841,7 +872,6 @@ function stopClock(){
 
 /* ---------- settings ---------- */
 function press(btns, test){ btns.forEach(function(b){ b.setAttribute("aria-pressed", String(test(b))); }); }
-function clampMins(v, dflt){ return Math.max(1, Math.min(180, parseInt(v, 10) || dflt)); }
 function syncSettings(){
   var sp = S.mode === "sprint";
   document.body.dataset.mode = S.mode;
@@ -950,7 +980,7 @@ $("card").addEventListener("click", function(e){
       o.d = fx.querySelector(".fix-area").value;
       if(k) o.e = +k.dataset.e;
       setFix(c.item, c.mode, o);
-      renderCard(false);
+      saveLocal(); renderLog(); renderCard(false);
       notice("Fix saved on this device. Export fixes to send it upstream.");
       break;
     case "invite": invite(); break;
@@ -973,7 +1003,7 @@ $("clearlog").onclick = function(){
   S.log = []; renderLog(); saveLocal();
 };
 document.addEventListener("keydown", function(e){
-  if(e.code !== "Space" || e.target.closest("input,select,textarea,button")) return;
+  if(e.code !== "Space" || e.target.closest("input,select,textarea,button,a")) return;
   e.preventDefault();
   if(T) pauseClock();                 // mid-session, space pauses instead of re-dealing
   else draw();
