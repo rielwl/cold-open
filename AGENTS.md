@@ -15,13 +15,18 @@ Read `README.md` for what the app is and `NEXT-STEPS.md` for where it stands.
   for papers that report their own measurements (`e:1` in the deck).
 - `tools/paper_ratings.tsv` and `tools/topic_ratings.tsv` are hand-reviewed
   data, committed on purpose, keyed by normalised title (`key()` in
-  `tools/enrich.mjs`, `keyOf()` in `index.html`: keep the two identical).
+  `tools/lib.mjs`, `keyOf()` in `index.html`: keep the two identical; the
+  tools test checks it).
   Papers: approachability `a` 0-3 (drives Date night), domain code, empirical
   flag `e`. Subjects: talkability `k` 0-3 (drives Talkable), domain code.
   Anything without a row gets 1 and keeps its original domain.
 - Corrections made in the app are exported as JSON ("export fixes") and folded
   in with `node tools/enrich.mjs <file>.json`. That's the supported way to change
-  a rating; editing the .tsv by hand also works.
+  a rating; editing the .tsv by hand also works (one row per key; enrich warns
+  about duplicates, and the later row wins).
+- `tools/lib.mjs` holds what `enrich.mjs` and `extend.mjs` share (corpus
+  read/write, the fetch helper, OpenAlex auth, `key()`). The Python scripts are
+  the original pipeline and are left as they were.
 
 ## Labelling new cards
 
@@ -56,7 +61,9 @@ analysis" as easy reading). Append rows, then re-run `node tools/enrich.mjs`.
 
 ## Checking a change
 
-There are no automated tests. Serve the folder (`npx serve .` or
+`node --test tools/lib.test.mjs` covers the tools' shared helpers and checks
+that `keyOf()` still matches `key()`. The app itself has no automated tests.
+Serve the folder (`npx serve .` or
 `python -m http.server`), then in a browser: deal in both modes, start and stop
 the clock, re-deal mid-clock, pass with a reason, correct a rating with "fix
 this" (it should survive a reload), and preview the print handout
