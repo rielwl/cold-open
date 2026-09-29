@@ -44,8 +44,10 @@ postmark. The design spec (tokens, type scale, component states) is in
   deliberately: the app has no network access at runtime, so the data ships with it.
 - `prompts.js` — the Sprint guiding questions and Paper lenses, as plain data. Edit and
   reload; no rebuild.
-- `tools/` — the scripts that build `corpus.js` from live sources, plus
-  `paper_ratings.tsv` (below).
+- `tools/` — the scripts that build `corpus.js` from live sources, plus the
+  hand-reviewed `paper_ratings.tsv` and `topic_ratings.tsv` (below). Their
+  shared helpers are in `tools/lib.mjs`; `node --test tools/lib.test.mjs` tests
+  them.
 
 ## The deck
 

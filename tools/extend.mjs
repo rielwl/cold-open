@@ -9,14 +9,8 @@
 // yet; label them (see AGENTS.md) or they stay off Date night / Talkable.
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { TOOLS, MAIL, OPENALEX_AUTH, key, readCorpus, writeCorpus, getJSON, clip, deabstract, pageCount } from "./lib.mjs";
 
-const TOOLS = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.dirname(TOOLS);
-// Contact for the APIs' polite pools. Optional: set CONTACT_EMAIL to add yours.
-const MAIL = process.env.CONTACT_EMAIL || "";
-const MAILTO = MAIL ? "&mailto=" + encodeURIComponent(MAIL) : "";
-const KEY = process.env.OPENALEX_API_KEY ? "&api_key=" + process.env.OPENALEX_API_KEY : "";
 const CACHE = path.join(TOOLS, "extend_cache.json");
 const UA = { "User-Agent": "ColdOpen/1.1 (https://github.com/rielwl/cold-open" + (MAIL ? "; " + MAIL : "") + ")" };
 
@@ -56,23 +50,9 @@ const SUB2DOM = { "History":"History & archaeology", "Archeology":"History & arc
   "Classics":"History & archaeology", "Music":"Art & design", "Visual Arts and Performing Arts":"Art & design" };
 const BAD_PAPER = /\b(systematic review|meta-analys|scoping review|study protocol|corrigendum|erratum|editorial|correction to|reply to|comment on|response to|book review|introduction to the special|guidelines?|questionnaire|psychometric|validation of|scale development)\b/i;
 
-const sleep = ms => new Promise(s => setTimeout(s, ms));
-async function getJSON(url, headers){
-  for(let a = 0; a < 3; a++){
-    const r = await fetch(url, { headers, signal: AbortSignal.timeout(30000) }).catch(() => null);
-    if(r && r.ok) return r.json();
-    if(r && r.status === 429 && a === 2) throw new Error("rate limited: " + url.slice(0, 80));
-    await sleep(1500 * (a + 1));
-  }
-  return null;
-}
-const clip = (s, n) => { s = (s || "").replace(/\s+/g, " ").trim(); return s.length <= n ? s : s.slice(0, n).replace(/\s+\S*$/, "") + "…"; };
-const norm = t => t.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "").slice(0, 80);
-
 const cache = fs.existsSync(CACHE) ? JSON.parse(fs.readFileSync(CACHE, "utf8")) : { cats: {}, pages: {}, works: {} };
 const save = () => fs.writeFileSync(CACHE, JSON.stringify(cache));
-const txt = fs.readFileSync(path.join(ROOT, "corpus.js"), "utf8");
-const corpus = JSON.parse(txt.slice(txt.indexOf("=") + 1).replace(/;\s*$/, ""));
+const corpus = readCorpus();
 
 /* ---------- Wikipedia subjects ---------- */
 const WP = "https://en.wikipedia.org/w/api.php?format=json&formatversion=2&";
@@ -108,7 +88,7 @@ async function hydrate(titles){
   save();
 }
 
-const have = new Set(corpus.topics.map(t => norm(t.t)));
+const have = new Set(corpus.topics.map(t => key(t.t)));
 const count = {};
 corpus.topics.forEach(t => count[t.d] = (count[t.d] || 0) + 1);
 let addedTopics = 0;
@@ -121,7 +101,7 @@ for(const [dom, cats] of Object.entries(SEEDCATS)){
     for(const s of (await members(c, 14)).slice(0, 20))
       (await members(s.replace(/^Category:/, ""), 0)).forEach(t => titles.add(t));
   }
-  titles = [...titles].filter(t => !BAD_TOPIC.test(t) && !have.has(norm(t)));
+  titles = [...titles].filter(t => !BAD_TOPIC.test(t) && !have.has(key(t)));
   process.stdout.write(`${dom}: ${titles.length} candidates `);
   await hydrate(titles);
   const rows = titles.map(t => ({ t, p: cache.pages[t] }))
@@ -130,19 +110,13 @@ for(const [dom, cats] of Object.entries(SEEDCATS)){
   for(const { t, p } of rows){
     const z = p.len < 12000 ? 0 : p.len < 30000 ? 1 : p.len < 70000 ? 2 : 3;
     corpus.topics.push({ t, x: clip(p.x, 300), u: p.u, d: dom, o: 0, z });
-    have.add(norm(t)); addedTopics++;
+    have.add(key(t)); addedTopics++;
   }
   console.log(`-> added ${rows.length}`);
 }
 
 /* ---------- humanities papers ---------- */
-function deabstract(inv){
-  if(!inv) return "";
-  const pos = [];
-  for(const [w, idx] of Object.entries(inv)) for(const i of idx) pos[i] = w;
-  return pos.filter(Boolean).join(" ");
-}
-const havePapers = new Set(corpus.papers.map(p => norm(p.t)));
+const havePapers = new Set(corpus.papers.map(p => key(p.t)));
 let addedPapers = 0;
 for(const q of PAPER_QUERIES){
   let cursor = "*";
@@ -153,7 +127,7 @@ for(const q of PAPER_QUERIES){
       const j = await getJSON("https://api.openalex.org/works?per-page=200&sort=cited_by_count:desc&cursor=" + cursor
         + "&select=title,publication_year,cited_by_count,primary_location,best_oa_location,abstract_inverted_index,primary_topic,biblio,doi"
         + "&filter=" + q.filter + ",is_oa:true,type:article,has_abstract:true,cited_by_count:>25,from_publication_date:2004-01-01"
-        + MAILTO + KEY);
+        + OPENALEX_AUTH);
       if(!j) break;
       res = cache.works[ck] = { next: j.meta && j.meta.next_cursor, results: j.results || [] };
       save();
@@ -161,21 +135,21 @@ for(const q of PAPER_QUERIES){
     cursor = res.next;
     for(const w of res.results){
       const t = (w.title || "").trim(), ab = deabstract(w.abstract_inverted_index);
-      if(t.length < 15 || BAD_PAPER.test(t) || havePapers.has(norm(t))) continue;
+      if(t.length < 15 || BAD_PAPER.test(t) || havePapers.has(key(t))) continue;
       if(ab.length < 400 || ab.length > 3000) continue;
       const oa = w.best_oa_location || {}, src = (w.primary_location || {}).source || {};
       const u = w.doi || oa.landing_page_url || oa.pdf_url;
       if(!u || !src.display_name) continue;
       const pt = w.primary_topic || {}, sub = (pt.subfield || {}).display_name || "";
-      const f = parseInt((w.biblio || {}).first_page, 10), l = parseInt((w.biblio || {}).last_page, 10);
       const p = { t, x: clip(ab, 760), u, j: src.display_name, y: w.publication_year, c: w.cited_by_count,
                   d: SUB2DOM[sub] || "Language & culture", f: sub };
       if(oa.pdf_url) p.pdf = oa.pdf_url;
-      if(f > 0 && l >= f && l - f < 120) p.pg = l - f + 1;
-      corpus.papers.push(p); havePapers.add(norm(t)); addedPapers++;
+      const pg = pageCount(w.biblio);
+      if(pg) p.pg = pg;
+      corpus.papers.push(p); havePapers.add(key(t)); addedPapers++;
     }
   }
 }
 
-fs.writeFileSync(path.join(ROOT, "corpus.js"), "window.SEEDS=" + JSON.stringify(corpus) + ";");
+writeCorpus(corpus);
 console.log(`added ${addedTopics} subjects and ${addedPapers} papers -> corpus.js now ${corpus.topics.length} / ${corpus.papers.length}`);

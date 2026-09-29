@@ -2,6 +2,8 @@
 tools/*.json
 tools/*.txt
 tools/*.log
+# build5.py's output; enrich.mjs turns it into ./corpus.js
+tools/corpus.js
 *.pyc
 __pycache__/
 _c.js

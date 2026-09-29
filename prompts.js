@@ -5,8 +5,10 @@
 // questions, one per talk card. Questions must work for any subject: a person,
 // a place, a species, a machine, an idea.
 //
-// Paper: s is the short name on the card's stamp. A lens with needs:"data" is only dealt for papers that report their own
-// measurements, so "find the effect size" never lands on a theory paper.
+// Paper: n is the lens's name (logged and printed on the handout), s the short
+// name on the card's stamp, p the prompt. A lens with needs:"data" is only dealt
+// for papers that report their own measurements, so "find the effect size"
+// never lands on a theory paper.
 window.PROMPTS = {
 questions: [
  {g:"Ground it", q:[
@@ -64,7 +66,7 @@ lenses: [
  {n:"Would you fund it", s:"Fund it?", p:"You have the grant money. Would you pay for this again, knowing the result? What would you cut?"},
  {n:"So what for us", s:"So what", p:"Find one thing in here that should change how either of you actually lives, votes or spends. Or argue nothing should."}
 ],
-// Printed on the handout when Claude's own "talk about" questions aren't available.
+// Paper: printed on the handout under "Afterwards, talk about".
 talk: [
  "What did each of you think they'd find, before reading the results?",
  "Which sentence would you quote to a friend, and which would you cross out?",
