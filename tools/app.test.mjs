@@ -5,6 +5,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
+import crypto from "node:crypto";
 import { ROOT, key } from "./lib.mjs";
 
 const read = f => fs.readFileSync(path.join(ROOT, f), "utf8");
@@ -12,11 +13,23 @@ const html = read("index.html");
 // Runs a window.X = ... data file and returns window.X.
 const loadGlobal = (file, name) => { const window = {}; vm.runInNewContext(read(file), { window }); return window[name]; };
 
+const scriptStart = html.lastIndexOf("<script>") + "<script>".length;
+const inlineScript = html.slice(scriptStart, html.indexOf("</script>", scriptStart));
+
 test("the inline app script parses", () => {
-  const start = html.lastIndexOf("<script>") + "<script>".length;
-  const src = html.slice(start, html.indexOf("</script>", start));
-  assert.ok(src.length > 1000, "inline script not found");
-  assert.doesNotThrow(() => new vm.Script(src));
+  assert.ok(inlineScript.length > 1000, "inline script not found");
+  assert.doesNotThrow(() => new vm.Script(inlineScript));
+});
+
+// The page's Content-Security-Policy only lets the inline script run if its hash
+// matches, so editing the script means updating the hash in index.html.
+test("the Content-Security-Policy allows the current inline script", () => {
+  const csp = (html.match(/<meta http-equiv="Content-Security-Policy" content="([^"]+)">/) || [])[1];
+  assert.ok(csp, "Content-Security-Policy meta tag not found");
+  const hash = "sha256-" + crypto.createHash("sha256").update(inlineScript, "utf8").digest("base64");
+  assert.ok(csp.includes(`'${hash}'`),
+    `the inline script changed: replace the 'sha256-...' value in index.html's Content-Security-Policy with '${hash}'`);
+  assert.match(csp, /connect-src 'none'/, "the page makes no network calls at runtime; keep connect-src 'none'");
 });
 
 test("every file the page loads is deployed", () => {

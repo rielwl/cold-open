@@ -55,7 +55,12 @@ analysis" as easy reading). Append rows, then re-run `node tools/enrich.mjs`.
   way; a static host serves it as-is.
 - Never commit API keys or personal emails. The tools read `OPENALEX_API_KEY`
   and `CONTACT_EMAIL` from the environment; the repo is public.
-- No network calls at runtime. The deck ships with the page.
+- No network calls at runtime. The deck ships with the page. A
+  Content-Security-Policy `<meta>` in `index.html` enforces it (`connect-src
+  'none'`) and only lets scripts from the page's own origin run, plus the inline
+  script by its hash. After editing the inline script, put the new hash in the
+  policy; `node --test tools/*.test.mjs` prints it. Loading anything new from
+  another origin means widening the policy, so think twice.
 - Reading and annotation happen on paper. See the non-goals in NEXT-STEPS.md
   before adding a PDF viewer, slide editor, or debate mode.
 
