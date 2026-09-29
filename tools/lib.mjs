@@ -32,17 +32,31 @@ export function writeCorpus(corpus){
 }
 
 const sleep = ms => new Promise(s => setTimeout(s, ms));
-// GET with three tries and a 30s timeout. Returns null if every try fails,
-// and throws if the API is still rate-limiting on the last try.
-export async function getJSON(url, headers){
-  for(let a = 0; a < 3; a++){
-    const r = await fetch(url, { headers, signal: AbortSignal.timeout(30000) }).catch(() => null);
+const TRIES = 3;
+// Worth another try: network errors, timeouts, rate limits and server errors.
+// Anything else (a 404, a malformed query) will fail the same way again.
+export const isRetryable = status => status == null || status === 429 || status >= 500;
+
+// For log lines: hides the API key and contact email that ride in the query string.
+export const redact = url => url.replace(/([?&](?:api_key|mailto|email)=)[^&]*/g, "$1…");
+
+// GET with three tries and a 30s timeout. Returns null, with a warning, when the
+// request fails; throws if the API is still rate-limiting on the last try.
+export async function getJSON(url, headers, fetchImpl = fetch){
+  let why = "";
+  for(let a = 0; a < TRIES; a++){
+    let r = null;
+    try{ r = await fetchImpl(url, { headers, signal: AbortSignal.timeout(30000) }); }
+    catch(e){ why = e.message; }
     if(r && r.ok) return r.json();
-    if(r && r.status === 429 && a === 2)
+    if(r) why = "HTTP " + r.status;
+    if(r && r.status === 429 && a === TRIES - 1)
       throw new Error("rate limited by " + new URL(url).host
         + " (for OpenAlex, the daily budget is used up: rerun tomorrow, the cache keeps what's done)");
-    await sleep(1500 * (a + 1));
+    if(!isRetryable(r && r.status)) break;
+    if(a < TRIES - 1) await sleep(1500 * (a + 1));
   }
+  console.warn(`gave up on ${redact(url).slice(0, 160)}: ${why}`);
   return null;
 }
 
