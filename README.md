@@ -150,9 +150,5 @@ It publishes only `index.html`, `corpus.js` and `prompts.js`; `tools/` stays in
 the repo. To deploy, just `git push`. The Actions tab shows each run, and
 **Run workflow** there redeploys by hand.
 
-An older copy still exists as a Claude artifact
-(https://claude.ai/code/artifact/b6bdc9cf-860b-44f4-a357-964ee43bf47f). It is no
-longer updated.
-
 Nothing here needs a database. The log is per-device by design; use export and
 import to carry it across.
