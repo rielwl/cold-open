@@ -1,0 +1,19 @@
+# Runs the checks in tools/*.test.mjs on every push and pull request.
+# Separate from pages.yml on purpose: a red test flags a problem without
+# holding up a deploy. No dependencies to install; node:test ships with Node.
+name: Test
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: node --version
+      - run: node --test tools/*.test.mjs
