@@ -3,278 +3,368 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="Deals you a subject or an open-access paper plus an angle to take, then starts the clock. Paper mode is built for a date night.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 fill=%27%23E23C1E%27/%3E%3Ctext x=%2716%27 y=%2722%27 font-family=%27Arial%27 font-weight=%27700%27 font-size=%2716%27 fill=%27%23fff%27 text-anchor=%27middle%27%3ECO%3C/text%3E%3C/svg%3E">
+<meta name="description" content="Deals you a subject with five guiding questions, or an open-access paper with a reading lens, then starts the clock. Paper mode is built for a date night.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 fill=%27%232d4a7a%27/%3E%3Crect x=%274%27 y=%274%27 width=%2724%27 height=%2724%27 fill=%27none%27 stroke=%27%23f7f4ec%27 stroke-width=%272%27 stroke-dasharray=%273 2%27/%3E%3Ctext x=%2716%27 y=%2721%27 font-family=%27Georgia%27 font-weight=%27700%27 font-size=%2713%27 fill=%27%23f7f4ec%27 text-anchor=%27middle%27%3ECO%3C/text%3E%3C/svg%3E">
 <title>Cold Open</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=DM+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
+/* ---------- 1. Tokens ---------- */
 :root{
-  --paper:#E6E5DC; --card:#F7F6F1; --ink:#191B1D; --ink-soft:#63676B;
-  --blue:#1C3E96; --on-blue:#FFFFFF; --flo:#E23C1E; --on-flo:#FFFFFF;
-  --rule:rgba(25,27,29,.17); --rule-firm:rgba(25,27,29,.34);
-  --ghost:rgba(28,62,150,.15); --chip:rgba(28,62,150,.09);
-  --ui:"Archivo",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  --read:"Newsreader",Georgia,"Times New Roman",serif;
-  --mono:"DM Mono",ui-monospace,SFMono-Regular,Consolas,monospace;
+  --surface:#e9e6df; --card:#f7f4ec; --ink:#23241f; --ink-soft:#595a53;
+  --accent:#2d4a7a; --accent-hover:#243d66; --on-accent:#f7f4ec;
+  --highlight:#a93826; --rules:#cfcac0; --lines:#dde2e8; --focus:#2d4a7a;
+  --stamp-sprint:#2d4a7a; --stamp-paper:#b8412f; --on-stamp:#f7f4ec;
+  --stripe-a:#b8412f; --stripe-b:#2d4a7a; --postmark:#6d6d67; --hover:rgba(35,36,31,.06);
+  --shadow-card:0 20px 36px -22px rgba(30,30,30,.5);
+  --serif:'Source Serif 4',Georgia,serif; --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px; --s8:64px;
+  --gutter:32px; --maxw:1080px; --line:32px;
+  --ease-deal:cubic-bezier(.2,.7,.2,1); --t-deal:420ms; --t-fast:140ms;
+  color-scheme:light;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --paper:#101214; --card:#191C1F; --ink:#E9E8E2; --ink-soft:#9CA0A5;
-  --blue:#8FA8FF; --on-blue:#0E1013; --flo:#FF6D48; --on-flo:#1A0E09;
-  --rule:rgba(233,232,226,.17); --rule-firm:rgba(233,232,226,.32);
-  --ghost:rgba(143,168,255,.16); --chip:rgba(143,168,255,.13);
-}}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --surface:#121826; --card:#1b2233; --ink:#e9e5dc; --ink-soft:#a8aebb;
+    --accent:#8fb0e6; --accent-hover:#a9c3ee; --on-accent:#0b0f19;
+    --highlight:#e08877; --rules:#333c52; --lines:#2a3246; --focus:#e9e5dc;
+    --stamp-sprint:#8fb0e6; --stamp-paper:#e08877; --on-stamp:#0b0f19;
+    --stripe-a:#c85a48; --stripe-b:#6f8fc4; --postmark:#8f96a5; --hover:rgba(233,229,220,.07);
+    --shadow-card:0 20px 36px -22px rgba(0,0,0,.8); color-scheme:dark;
+  }
+}
 :root[data-theme="dark"]{
-  --paper:#101214; --card:#191C1F; --ink:#E9E8E2; --ink-soft:#9CA0A5;
-  --blue:#8FA8FF; --on-blue:#0E1013; --flo:#FF6D48; --on-flo:#1A0E09;
-  --rule:rgba(233,232,226,.17); --rule-firm:rgba(233,232,226,.32);
-  --ghost:rgba(143,168,255,.16); --chip:rgba(143,168,255,.13);
+  --surface:#121826; --card:#1b2233; --ink:#e9e5dc; --ink-soft:#a8aebb;
+  --accent:#8fb0e6; --accent-hover:#a9c3ee; --on-accent:#0b0f19;
+  --highlight:#e08877; --rules:#333c52; --lines:#2a3246; --focus:#e9e5dc;
+  --stamp-sprint:#8fb0e6; --stamp-paper:#e08877; --on-stamp:#0b0f19;
+  --stripe-a:#c85a48; --stripe-b:#6f8fc4; --postmark:#8f96a5; --hover:rgba(233,229,220,.07);
+  --shadow-card:0 20px 36px -22px rgba(0,0,0,.8); color-scheme:dark;
 }
-*{box-sizing:border-box}
-[hidden]{display:none !important}
-body{background:var(--paper);color:var(--ink);font-family:var(--read);line-height:1.55;
-  margin:0;padding-block:28px 150px;padding-left:20px;padding-right:20px;
-  -webkit-font-smoothing:antialiased}
-.wrap{max-width:780px;margin:0 auto}
-h1,h2{margin:0;text-wrap:balance}
-button{font-family:var(--ui);cursor:pointer;color:inherit}
-:focus-visible{outline:2px solid var(--flo);outline-offset:2px}
 
-.mast{display:flex;justify-content:space-between;align-items:baseline;gap:14px;
-  flex-wrap:wrap;border-bottom:2px solid var(--ink);padding-bottom:10px}
-.mark{font-family:var(--ui);font-weight:700;font-size:22px;letter-spacing:-.02em}
-.mark em{font-style:normal;color:var(--flo)}
-.tagline{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft)}
+/* ---------- 2. Base ---------- */
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--surface);color:var(--ink);font:400 16px/1.6 var(--serif);-webkit-font-smoothing:antialiased}
+body.clock-on{padding-bottom:88px}
+a{color:var(--accent);text-underline-offset:3px}
+a:hover{color:var(--accent-hover)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+[hidden]{display:none!important}
+.wrap{max-width:calc(var(--maxw) + 2*var(--gutter));margin:0 auto;padding:0 var(--gutter)}
+.label{font:500 10.5px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
+body[data-mode="sprint"] .paperonly,body[data-mode="paper"] .sprintonly{display:none!important}
 
-.tabs{display:flex;margin-top:18px;border:1.5px solid var(--ink);width:fit-content;max-width:100%}
-.tab{background:none;border:0;padding:9px 17px;font-size:12.5px;font-weight:600;
-  letter-spacing:.06em;text-transform:uppercase;border-right:1.5px solid var(--ink)}
-.tab:last-child{border-right:0}
-.tab[aria-selected="true"]{background:var(--ink);color:var(--paper)}
+/* ---------- 3. Header + tabs ---------- */
+.top{display:flex;justify-content:space-between;align-items:center;gap:var(--s4);flex-wrap:wrap;padding:var(--s6) 0 var(--s5)}
+.wordmark{margin:0;font:600 26px/1.1 var(--serif);letter-spacing:-.01em}
+.tagline{margin:6px 0 0;font:400 12px/1.4 var(--mono);color:var(--ink-soft)}
+.tabs{display:flex;border:1px solid var(--ink)}
+.tabs [role="tab"]{min-height:42px;padding:0 16px;white-space:nowrap;border:0;background:transparent;font:400 13px/1 var(--mono);color:var(--ink);cursor:pointer}
+.tabs [role="tab"]+[role="tab"]{border-left:1px solid var(--ink)}
+.tabs [role="tab"]:hover{background:var(--hover)}
+.tabs [role="tab"][aria-selected="true"]{background:var(--ink);color:var(--card)}
 
-.console{margin-top:20px;border:1px solid var(--rule-firm);background:var(--card);
-  padding:16px 18px;display:flex;flex-direction:column;gap:15px}
-.row{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
-.field{display:flex;flex-direction:column;gap:7px;min-width:0}
-.lbl{font-family:var(--ui);font-size:10.5px;font-weight:600;letter-spacing:.12em;
-  text-transform:uppercase;color:var(--ink-soft)}
-.seg{display:flex;border:1px solid var(--rule-firm);flex-wrap:wrap}
-.seg button{background:none;border:0;border-right:1px solid var(--rule-firm);
-  padding:7px 12px;font-size:12px;font-weight:500;white-space:nowrap}
-.seg button:last-child{border-right:0}
-.seg button[aria-pressed="true"]{background:var(--blue);color:var(--on-blue)}
-.mins{font-family:var(--mono);width:64px;padding:7px 8px;background:var(--paper);
-  color:var(--ink);border:1px solid var(--rule-firm);font-size:13px}
-.knownbtn{background:none;border:1px dashed var(--rule-firm);padding:7px 12px;
-  font-size:12px;font-weight:500;text-align:left}
-.hint{font-family:var(--mono);font-size:11px;color:var(--ink-soft);line-height:1.5;margin:10px 0 9px}
-.chips{display:flex;flex-wrap:wrap;gap:7px}
-.chip{background:none;border:1px solid var(--rule-firm);padding:5px 11px;font-size:12px;
-  border-radius:999px;font-weight:500}
-.chip[aria-pressed="true"]{background:var(--chip);border-color:var(--blue);color:var(--blue)}
+/* ---------- 4. Settings ---------- */
+.settings{display:flex;flex-wrap:wrap;align-items:flex-end;gap:var(--s4) var(--s6);padding:var(--s4) 0;border-top:1px solid var(--rules);border-bottom:1px solid var(--rules)}
+.field{display:flex;flex-direction:column;gap:var(--s2)}
+.seg{display:inline-flex;border:1px solid var(--ink);background:var(--card)}
+.seg button{min-height:40px;padding:0 12px;white-space:nowrap;border:0;background:transparent;font:400 13px/1 var(--mono);color:var(--ink);cursor:pointer}
+.seg button+button,.seg input{border-left:1px solid var(--ink)}
+.seg button:hover{background:var(--hover)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--card)}
+.seg button:disabled{opacity:.45;cursor:not-allowed}
+.seg input{width:64px;min-height:40px;border-top:0;border-right:0;border-bottom:0;padding:0 8px;background:transparent;font:400 13px/1 var(--mono);text-align:right}
+.seg .unit{display:flex;align-items:center;padding:0 10px 0 2px;font:400 12px/1 var(--mono);color:var(--ink-soft)}
+.deal{margin-left:auto;min-height:48px;padding:0 44px;border:0;background:var(--accent);color:var(--on-accent);font:500 15px/1 var(--mono);letter-spacing:.24em;cursor:pointer;transition:transform var(--t-fast),background var(--t-fast)}
+.deal:hover{background:var(--accent-hover)}
+.deal:active{transform:translateY(1px)}
+.deal:disabled{opacity:.45;cursor:not-allowed}
+.known{flex-basis:100%;display:flex;flex-direction:column;gap:var(--s3)}
+#toggleknown{align-self:flex-start;min-height:40px;padding:0;border:0;background:none;font:400 13px/1.4 var(--mono);color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:8px}
+#toggleknown::before{content:"+";display:inline-grid;place-items:center;width:18px;height:18px;border:1px solid var(--ink);font-size:12px}
+#toggleknown[aria-expanded="true"]::before{content:"–"}
+#toggleknown .sum{color:var(--ink-soft)}
+#knownpanel{display:flex;flex-direction:column;gap:var(--s3);padding:var(--s4);background:var(--card);border:1px dashed var(--rules)}
+#knownpanel p{margin:0;font-size:15px;font-style:italic;color:var(--ink-soft)}
+#chips{display:flex;flex-wrap:wrap;gap:var(--s2)}
+.chip{min-height:40px;padding:0 14px;border:1px solid var(--ink);border-radius:999px;background:transparent;font:400 13px/1 var(--mono);cursor:pointer}
+.chip:hover{background:var(--hover)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--card)}
+.chip[aria-pressed="true"]::before{content:"✓ "}
 
-.deal{margin-top:16px;width:100%;background:var(--ink);color:var(--paper);border:0;
-  padding:15px;font-size:14px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
-  display:flex;align-items:center;justify-content:center;gap:10px}
-.deal:hover{background:var(--blue);color:var(--on-blue)}
-.kbd{font-family:var(--mono);font-size:10px;letter-spacing:0;opacity:.65;
-  border:1px solid currentColor;padding:1px 5px;text-transform:none;font-weight:400}
+/* ---------- 5. Card ---------- */
+main{padding:var(--s6) 0 var(--s7)}
+#card.is-empty{display:grid;place-items:center;min-height:320px;border:2px dashed var(--rules);text-align:center;padding:var(--s6)}
+#card.is-empty .empty-t{font:italic 400 22px/1.4 var(--serif)}
+#card.is-empty .empty-s{margin-top:6px;font:400 12px/1.4 var(--mono);color:var(--ink-soft)}
+.card-frame{padding:9px;background:repeating-linear-gradient(-45deg,var(--stripe-a) 0 16px,var(--card) 16px 24px,var(--stripe-b) 24px 40px,var(--card) 40px 48px);box-shadow:var(--shadow-card)}
+.card-sheet{background:var(--card);padding:36px 52px 40px;display:flex;flex-direction:column;gap:var(--s4)}
+.card-head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--s5);align-items:start}
+.card-head-text{display:flex;flex-direction:column;gap:var(--s3);min-width:0}
+.franking{display:flex;gap:var(--s3);align-items:flex-start}
+.postmark{width:104px;height:104px;margin-top:6px;border-radius:50%;border:2px solid var(--postmark);color:var(--postmark);display:grid;place-items:center;text-align:center;font:500 10px/1.45 var(--mono);letter-spacing:.08em;transform:rotate(-12deg)}
+.stamp{width:92px;height:112px;flex:none;background:var(--stamp-sprint);color:var(--on-stamp);outline:3px dotted var(--card);outline-offset:-3px;box-shadow:0 0 0 3px var(--card),0 1px 3px rgba(0,0,0,.25);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:6px;text-align:center;font:500 10px/1.3 var(--mono);letter-spacing:.1em;text-transform:uppercase}
+.stamp b{font:600 34px/1 var(--serif);letter-spacing:0}
+#card[data-mode="paper"] .stamp{background:var(--stamp-paper)}
+.address{margin:0;font:italic 400 17px/1.5 var(--serif);color:var(--ink-soft)}
+.title{margin:0;font:600 clamp(30px,4.2vw,48px)/1.06 var(--serif);letter-spacing:-.015em;text-wrap:balance}
+.blurb{margin:0;font:italic 400 21px/1.4 var(--serif);text-wrap:pretty}
+.meta{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 24px;padding:12px 0;border-top:1px dashed var(--rules);border-bottom:1px dashed var(--rules);font:400 12px/1.5 var(--mono);color:var(--ink-soft)}
+.rating{display:inline-flex;flex-wrap:wrap;align-items:baseline;gap:0 6px}
+.linkbtn{padding:0;border:0;background:none;font:inherit;color:var(--highlight);text-decoration:underline;text-underline-offset:3px;cursor:pointer;min-height:24px}
+.linkbtn:hover{color:var(--ink)}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:44px;margin-top:4px}
+#card[data-mode="paper"] .cols{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}
+.extract{font:400 16.5px/1.65 var(--serif);text-wrap:pretty}
+.extract p{margin:0 0 var(--s3)}
+.links{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s5);font:400 13px/1.4 var(--mono)}
+.links a{display:inline-flex;align-items:center;min-height:32px}
+.angle{background-image:repeating-linear-gradient(transparent 0 calc(var(--line) - 1px),var(--lines) calc(var(--line) - 1px) var(--line));line-height:var(--line)}
+.angle .label{display:block;font:500 10.5px/var(--line) var(--mono);color:var(--highlight)}
+.qs{margin:0;padding:0;list-style:none;counter-reset:q;font-size:16.5px}
+.qs li{counter-increment:q;display:grid;grid-template-columns:28px 1fr}
+.qs li::before{content:counter(q);font:400 13px/var(--line) var(--mono);color:var(--highlight)}
+.lens{margin:0;font:italic 400 24px/var(--line) var(--serif);text-wrap:pretty}
+.acts{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s2) 10px;margin-top:var(--s2)}
+.act{min-height:44px;padding:0 16px;white-space:nowrap;border:1px solid var(--ink);background:transparent;color:var(--ink);font:500 13px/1 var(--mono);cursor:pointer;transition:background var(--t-fast),transform var(--t-fast)}
+.act:hover{background:var(--hover)}
+.act:active{transform:translateY(1px)}
+.act:disabled{opacity:.45;cursor:not-allowed}
+.act.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.act.primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+.act.quiet{border-color:transparent;padding:0 8px;text-decoration:underline;text-underline-offset:3px;color:var(--ink-soft)}
+.act.quiet:hover{color:var(--ink);background:transparent}
+.acts .spacer{flex:1}
+.reasons,.fixer{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s2) 10px;padding:var(--s4);border:1px dashed var(--rules);background:var(--surface)}
+.reasons .label,.fixer .label{flex-basis:100%}
+.fixer .row{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s2) var(--s3);flex-basis:100%}
+.fixer select{min-height:40px;padding:0 10px;border:1px solid var(--ink);background:var(--card);font:400 13px/1 var(--mono)}
+.fixer .seg button{display:flex;flex-direction:column;justify-content:center;gap:3px;min-height:48px;padding:4px 12px;text-align:left}
+.fixer .seg button small{font-size:10.5px;color:inherit;opacity:.8}
+.notice{margin:0;padding:12px 14px;border:1px solid var(--ink);background:var(--surface);font:400 13px/1.45 var(--mono)}
+.notice::before{content:"✉ ";color:var(--highlight)}
+.copybox{margin:0;padding:var(--s4);border:1px dashed var(--rules);background:var(--surface);font:400 13px/1.5 var(--mono);white-space:pre-wrap;word-break:break-word;user-select:all}
+@keyframes deal-in{from{opacity:0;transform:translateY(28px) rotate(-1.2deg)}to{opacity:1;transform:none}}
+@keyframes frank{from{opacity:0;transform:rotate(-12deg) scale(1.35)}to{opacity:1;transform:rotate(-12deg) scale(1)}}
+#card.dealt .card-frame{animation:deal-in var(--t-deal) var(--ease-deal) both}
+#card.dealt .postmark{animation:frank 260ms var(--ease-deal) 320ms both}
 
-.card{margin-top:24px;background:var(--card);border:1px solid var(--ink);
-  padding:26px 24px 22px;box-shadow:5px 5px 0 var(--ghost)}
-@keyframes reg{from{box-shadow:12px 9px 0 var(--ghost);transform:translate(-4px,-3px)}
-  to{box-shadow:5px 5px 0 var(--ghost);transform:none}}
-.card.dealt{animation:reg .42s cubic-bezier(.2,.9,.3,1)}
-@media (prefers-reduced-motion:reduce){.card.dealt{animation:none}}
-.cardtop{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.stamp{display:inline-block;background:var(--flo);color:var(--on-flo);font-family:var(--ui);
-  font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;
-  padding:5px 11px;transform:rotate(-1.1deg)}
-.dom{font-family:var(--mono);font-size:11px;color:var(--ink-soft)}
-.title{font-family:var(--read);font-weight:600;font-size:clamp(26px,5.2vw,37px);
-  line-height:1.13;letter-spacing:-.015em;margin:16px 0 0}
-.deck{margin:13px 0 0;font-style:italic;font-size:17.5px;line-height:1.45;max-width:58ch}
-.meta{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);margin-top:10px;
-  font-variant-numeric:tabular-nums;line-height:1.55}
-.extract{margin:14px 0 0;font-size:16.5px;line-height:1.6;max-width:62ch}
-.angle{margin-top:20px;border-left:3px solid var(--flo);padding:2px 0 2px 15px}
-.angle .lbl{color:var(--flo)}
-.angle .qs{margin:8px 0 0;padding-left:22px;max-width:60ch}
-.angle .qs li{font-size:16px;line-height:1.5;margin-bottom:6px}
-.angle p{margin:5px 0 0;font-size:16px;line-height:1.5;max-width:60ch}
-.src{display:inline-flex;align-items:center;gap:6px;margin-top:18px;font-family:var(--ui);
-  font-size:12.5px;font-weight:600;color:var(--blue);text-decoration:none;
-  border-bottom:1.5px solid var(--blue);padding-bottom:1px}
-.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px;padding-top:18px;border-top:1px solid var(--rule)}
-.act{background:none;border:1px solid var(--rule-firm);padding:8px 14px;font-size:12.5px;font-weight:600}
-.act:hover{border-color:var(--ink)}
-.act.primary{background:var(--blue);border-color:var(--blue);color:var(--on-blue)}
-.act[disabled]{opacity:.45;cursor:default}
-.aiblock{margin-top:18px;border:1px dashed var(--rule-firm);padding:14px 16px;background:var(--paper)}
-.aiblock ol,.aiblock ul{margin:8px 0 0;padding-left:19px}
-.aiblock li{margin-bottom:8px;font-size:15.5px;line-height:1.5}
-.aiblock p{margin:7px 0 0;font-size:15.5px;line-height:1.5}
-.aiblock p.warn{color:var(--flo)}
-.spin{font-family:var(--mono);font-size:12px;color:var(--ink-soft);margin:0}
+/* ---------- 6. Log + footer ---------- */
+.log{padding:var(--s6) 0 var(--s7);border-top:1px solid var(--rules)}
+.log-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--s2) var(--s4)}
+.log-head h2{margin:0;font:600 22px/1.2 var(--serif)}
+#logcount{font:400 12px/1 var(--mono);color:var(--ink-soft)}
+.log-links{margin-left:auto;display:flex;flex-wrap:wrap;gap:0 var(--s2)}
+.log-links button{min-height:40px;padding:0 6px;border:0;background:none;font:400 12px/1 var(--mono);color:var(--accent);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.log-links button:hover{color:var(--accent-hover)}
+.log-links button:disabled{color:var(--ink-soft);opacity:.6;cursor:not-allowed;text-decoration:none}
+#logbody{list-style:none;margin:var(--s4) 0 0;padding:0}
+.logrow{display:grid;grid-template-columns:64px 64px minmax(0,1fr) auto;gap:var(--s3);align-items:baseline;padding:10px 0;border-bottom:1px solid var(--lines)}
+.logrow .d,.logrow .m,.logrow .s{font:400 12px/1.4 var(--mono);color:var(--ink-soft)}
+.logrow .t{font:400 15px/1.4 var(--serif)}
+.logrow[data-status="done"] .s{color:var(--accent)}
+.logrow[data-status="passed"] .t{color:var(--ink-soft);text-decoration:line-through;text-decoration-color:var(--rules)}
+.log-empty{margin:var(--s4) 0 0;font:italic 400 16px/1.5 var(--serif);color:var(--ink-soft)}
+#foot{padding:var(--s5) 0 var(--s7);border-top:1px solid var(--rules);font:400 12px/1.6 var(--mono);color:var(--ink-soft)}
 
-.clockbar{position:fixed;left:0;right:0;bottom:0;background:var(--ink);color:var(--paper);
-  padding:12px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;
-  justify-content:center;z-index:30;border-top:3px solid var(--flo)}
-.digits{font-family:var(--mono);font-weight:500;font-size:clamp(30px,7vw,40px);
-  font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1.05}
-.phase{font-family:var(--ui);font-size:10.5px;font-weight:700;letter-spacing:.16em;
-  text-transform:uppercase;opacity:.78}
-.cbtn{background:none;border:1px solid currentColor;color:inherit;padding:7px 13px;
-  font-size:12px;font-weight:600}
-.cbtn.go{background:var(--flo);border-color:var(--flo);color:var(--on-flo)}
-@media(max-width:520px){.clockbar{gap:9px;padding:9px 10px;flex-wrap:nowrap}
-  .digits{font-size:27px}.cbtn{padding:7px 9px;font-size:11.5px;white-space:nowrap}}
+/* ---------- 7. Timer bar ---------- */
+#clockbar{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--card);border-top:1px solid var(--rules);padding:10px 0 calc(10px + env(safe-area-inset-bottom))}
+#clockbar::before{content:"";position:absolute;top:-1px;left:0;height:3px;width:calc(var(--p,0) * 100%);background:var(--accent);transition:width 250ms linear}
+#clockbar .wrap{display:flex;align-items:center;gap:8px}
+#phase{font:500 12px/1 var(--mono);letter-spacing:.1em;color:var(--highlight);min-width:40px}
+#digits{font:500 28px/1 var(--mono);font-variant-numeric:tabular-nums;color:var(--accent);min-width:88px}
+#clockbar .cb-acts{margin-left:auto;display:flex;gap:6px}
+#clockbar button{min-height:42px;padding:0 12px;border:1px solid var(--ink);background:transparent;font:400 13px/1 var(--mono);color:var(--ink);cursor:pointer}
+#clockbar button:hover{background:var(--hover)}
+#c-skip{background:var(--accent)!important;border-color:var(--accent)!important;color:var(--on-accent)!important}
+#c-stop{border-color:transparent!important;text-decoration:underline;text-underline-offset:3px;color:var(--ink-soft)!important;padding:0 6px!important}
+#clockbar[data-paused="true"] #digits{opacity:.55}
+#clockbar[data-final="true"] #digits{color:var(--highlight)}
+#clockbar[data-final="true"]::before{background:var(--highlight)}
+@keyframes tickpulse{50%{opacity:.35}}
+#clockbar[data-final="true"]:not([data-paused="true"]) #phase{animation:tickpulse 1s steps(1) infinite}
 
-.log{margin-top:40px;border-top:2px solid var(--ink);padding-top:14px}
-.loghead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
-.logrow{display:grid;grid-template-columns:74px 1fr auto;gap:12px;padding:11px 0;
-  border-bottom:1px solid var(--rule);align-items:baseline}
-.logrow.passed{opacity:.5}
-.when{font-family:var(--mono);font-size:11px;color:var(--ink-soft);font-variant-numeric:tabular-nums}
-.what{font-size:15.5px;line-height:1.4;min-width:0}
-.what b{font-weight:600}
-.what small{display:block;font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);margin-top:2px}
-.tag{font-family:var(--mono);font-size:10.5px;color:var(--ink-soft);white-space:nowrap}
-.empty{font-family:var(--mono);font-size:12px;color:var(--ink-soft);padding:14px 0;margin:0}
-.linkish{background:none;border:0;padding:0;font-family:var(--mono);font-size:11px;
-  color:var(--ink-soft);text-decoration:underline}
-@media(max-width:520px){.logrow{grid-template-columns:1fr;gap:3px}.tag{display:none}}
-.srcs{display:flex;gap:18px;flex-wrap:wrap;align-items:baseline}
-.src.quiet{color:var(--ink-soft);border-bottom-color:var(--rule-firm)}
-.reasons{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-top:12px}
-.reasons .lbl{margin-right:4px}
-.notice{font-family:var(--mono);font-size:11.5px;color:var(--blue);margin:12px 0 0}
-.rating{font-family:var(--mono);font-size:11px;color:var(--ink-soft);margin-top:4px;
-  display:flex;gap:8px;flex-wrap:wrap;align-items:baseline}
-.fixer{margin-top:10px;border:1px dashed var(--rule-firm);padding:12px 14px;display:flex;
-  flex-direction:column;gap:11px;background:var(--paper)}
-.fixer select{font-family:var(--ui);font-size:12px;padding:6px 8px;background:var(--card);
-  color:var(--ink);border:1px solid var(--rule-firm);max-width:100%}
-.handout{display:none}
-.foot{margin-top:34px;font-family:var(--mono);font-size:11px;color:var(--ink-soft);
-  line-height:1.65;border-top:1px solid var(--rule);padding-top:14px}
+/* ---------- 8. Handout (screen hidden; print + preview) ---------- */
+.handout{display:none;background:#fff;color:#000;font:400 11pt/1.5 var(--serif);max-width:180mm;margin:0 auto}
+.handout .h-mast{display:flex;justify-content:space-between;gap:6mm;white-space:nowrap;padding-bottom:3mm;border-bottom:3pt double #000;font:500 8.5pt/1 var(--mono);letter-spacing:.14em;text-transform:uppercase}
+.handout .h-stamp{display:inline-block;white-space:nowrap;margin-top:7mm;padding:1.5mm 3mm;border:1pt solid #000;font:500 8pt/1 var(--mono);letter-spacing:.14em;text-transform:uppercase}
+.handout h1{margin:3mm 0 2mm;font:600 22pt/1.1 var(--serif);letter-spacing:-.01em}
+.handout .h-meta{margin:0 0 5mm;font:400 8.5pt/1.5 var(--mono)}
+.handout h2{margin:0 0 1.5mm;font:500 8pt/1 var(--mono);letter-spacing:.14em;text-transform:uppercase}
+.handout section{margin-bottom:5mm;break-inside:avoid}
+.handout .h-lens{padding:3.5mm 4mm;border:1pt solid #000}
+.handout .h-lens p{margin:0;font:italic 400 14pt/1.35 var(--serif)}
+.handout .h-abs p{margin:0;font-size:10.5pt}
+.handout .h-url{margin:0 0 5mm;font:400 9pt/1.4 var(--mono);word-break:break-all}
+.handout ol{margin:0;padding-left:6mm}
+.handout ol li{margin-bottom:1mm}
+.handout .h-lines div{height:8.5mm;border-bottom:.5pt solid #000}
+.handout .h-foot{margin-top:4mm;font:400 7.5pt/1 var(--mono);display:flex;justify-content:space-between}
+html[data-preview="handout"] body{background:#fff}
+html[data-preview="handout"] body>*:not(.handout){display:none!important}
+html[data-preview="handout"] .handout{display:block;padding:16mm 0}
 
-/* Print handout: one sheet per person, for reading on paper. */
+/* ---------- 9. Responsive ---------- */
+@media (max-width:760px){
+  .cols,#card[data-mode="paper"] .cols{grid-template-columns:minmax(0,1fr);gap:var(--s5)}
+  .deal{margin-left:0;flex-basis:100%}
+}
+@media (max-width:640px){
+  :root{--gutter:16px;--line:28px}
+  .top{padding:var(--s4) 0}
+  .wordmark{font-size:20px}
+  .tagline{display:none}
+  .tabs [role="tab"]{padding:0 12px;font-size:12px}
+  .settings{gap:var(--s3) var(--s4)}
+  .field{flex-basis:100%}
+  .seg{display:flex;flex-wrap:wrap}
+  .seg button{flex:1 1 auto;white-space:normal;padding:6px 10px;line-height:1.25}
+  .seg input{flex:0 0 64px}
+  .tabs{flex:1 1 100%}
+  .tabs [role="tab"]{flex:1}
+  main{padding:var(--s4) 0 var(--s6)}
+  .card-frame{padding:7px;background:repeating-linear-gradient(-45deg,var(--stripe-a) 0 11px,var(--card) 11px 16px,var(--stripe-b) 16px 27px,var(--card) 27px 32px)}
+  .card-sheet{padding:20px 18px 22px;gap:var(--s3)}
+  .card-head{gap:var(--s3)}
+  .postmark{display:none}
+  .stamp{width:58px;height:70px;gap:3px;font-size:7px;outline-width:2px;outline-offset:-2px;box-shadow:0 0 0 2px var(--card)}
+  .stamp b{font-size:20px}
+  .address{font-size:13px}
+  .blurb{font-size:16px}
+  .extract{font-size:15px}
+  .qs{font-size:15px}
+  .lens{font-size:19px}
+  .act{flex:1 1 auto}
+  .act.quiet{flex:0 0 auto}
+  .logrow{grid-template-columns:52px minmax(0,1fr) auto}
+  .logrow .m{display:none}
+}
+@media (max-width:420px){
+  #clockbar .wrap{gap:6px}
+  #phase{min-width:0;font-size:11px}
+  #digits{font-size:26px;min-width:0}
+  #clockbar .cb-acts{gap:4px}
+  #clockbar button{padding:0 8px;font-size:12px;white-space:nowrap}
+  #clockbar .wide{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition-duration:0ms!important}
+  #card.dealt .card-frame{animation:fade 120ms linear both}
+  #card.dealt .postmark{animation:none}
+  #clockbar[data-final="true"] #phase{animation:none}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+}
+
+/* ---------- 10. Print — last, so it outranks the dark theme ---------- */
 @media print{
-  html:root:not([data-theme="none"]){--paper:#fff;--card:#fff;--ink:#000;--ink-soft:#444;
-    --blue:#000;--flo:#000;--on-flo:#fff;--rule:#bbb;--rule-firm:#888}  /* outranks the dark-mode tokens */
-  body{padding:0;background:#fff;color:#000;font-size:12pt}
-  body > .wrap > :not(.card), .clockbar, .acts, #ai, .reasons, .notice, .rating, .fixer{display:none !important}
-  .card{border:0;box-shadow:none;padding:0;margin:0;animation:none}
-  .extract{font-size:11.5pt}
-  .src::after{content:" \2014 " attr(href);font-family:var(--mono);font-size:9pt;font-weight:400;word-break:break-all}
-  .handout{display:block;margin-top:18pt}
-  .handout h2{font-family:var(--ui);font-size:10pt;letter-spacing:.12em;text-transform:uppercase;margin:16pt 0 6pt}
-  .handout li{margin-bottom:5pt}
-  .lines{height:190pt;background:repeating-linear-gradient(#fff 0 23pt,#999 23pt 24pt)}
+  @page{margin:14mm}
+  :root,:root[data-theme="dark"]{color-scheme:light}
+  html,body{background:#fff!important;color:#000!important}
+  body>*:not(.handout){display:none!important}
+  .handout{display:block!important;max-width:none}
 }
 </style>
 </head>
-<body>
-
+<body data-mode="sprint">
 <div class="wrap">
-  <header class="mast">
-    <div class="mark">Cold <em>Open</em></div>
-    <div class="tagline">draw a subject &middot; start the clock &middot; go in blind</div>
+  <header class="top">
+    <div>
+      <h1 class="wordmark">Cold Open</h1>
+      <p class="tagline">draw a subject · start the clock · go in blind</p>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Mode">
+      <button id="tab-sprint" role="tab" aria-selected="true" aria-controls="card">Sprint — solo</button>
+      <button id="tab-paper" role="tab" aria-selected="false" aria-controls="card">Paper — two of you</button>
+    </div>
   </header>
 
-  <div class="tabs" role="tablist" aria-label="Mode">
-    <button class="tab" id="tab-sprint" role="tab" aria-selected="true">Sprint &mdash; solo</button>
-    <button class="tab" id="tab-paper" role="tab" aria-selected="false">Paper &mdash; two of you</button>
-  </div>
-
-  <section class="console" aria-label="Draw settings">
-    <div class="row">
-      <div class="field">
-        <span class="lbl" id="l-fam">Familiarity</span>
-        <div class="seg" role="group" aria-labelledby="l-fam">
-          <button id="fam-far" aria-pressed="false">Far from what I know</button>
-          <button id="fam-any" aria-pressed="true">Anywhere</button>
-          <button id="fam-close" aria-pressed="false">Close to home</button>
-        </div>
-      </div>
-      <div class="field">
-        <span class="lbl" id="l-min">Clock</span>
-        <div class="row" style="gap:8px">
-          <div class="seg" role="group" aria-labelledby="l-min">
-            <button class="mpreset" data-m="15" aria-pressed="false">15</button>
-            <button class="mpreset" data-m="20" aria-pressed="false">20</button>
-            <button class="mpreset" data-m="25" aria-pressed="true">25</button>
-            <button class="mpreset" data-m="30" aria-pressed="false">30</button>
-          </div>
-          <input class="mins" id="mins" type="number" min="1" max="180" value="25"
-                 aria-label="Minutes" inputmode="numeric">
-        </div>
-      </div>
-    </div>
-    <div class="row">
-      <div class="field">
-        <span class="lbl" id="l-easy">Papers</span>
-        <div class="seg" role="group" aria-labelledby="l-easy">
-          <button id="easy-on" aria-pressed="true">Date night &mdash; anyone can follow</button>
-          <button id="easy-off" aria-pressed="false">Anything</button>
-        </div>
-      </div>
-      <div class="field paperonly">
-        <span class="lbl" id="l-talk">Talk clock</span>
-        <div class="row" style="gap:8px">
-          <div class="seg" role="group" aria-labelledby="l-talk">
-            <button class="tpreset" data-m="15" aria-pressed="false">15</button>
-            <button class="tpreset" data-m="30" aria-pressed="true">30</button>
-            <button class="tpreset" data-m="45" aria-pressed="false">45</button>
-          </div>
-          <input class="mins" id="talkmins" type="number" min="1" max="180" value="30"
-                 aria-label="Talk minutes" inputmode="numeric">
-        </div>
+  <section class="settings" aria-label="Settings">
+    <div class="field">
+      <span class="label" id="fam-l">Familiarity</span>
+      <div class="seg" role="group" aria-labelledby="fam-l">
+        <button id="fam-far" aria-pressed="false">Far from what I know</button>
+        <button id="fam-any" aria-pressed="true">Anywhere</button>
+        <button id="fam-close" aria-pressed="false">Close to home</button>
       </div>
     </div>
     <div class="field">
-      <button class="knownbtn" id="toggleknown" aria-expanded="false" aria-controls="knownpanel">
-        What I already know &mdash; <span id="knowncount">nothing ticked yet</span>
-      </button>
+      <span class="label" id="mins-l">Clock</span>
+      <div class="seg" role="group" aria-labelledby="mins-l">
+        <button class="mpreset" data-v="15" aria-pressed="false">15</button>
+        <button class="mpreset" data-v="20" aria-pressed="false">20</button>
+        <button class="mpreset" data-v="25" aria-pressed="true">25</button>
+        <button class="mpreset" data-v="30" aria-pressed="false">30</button>
+        <input id="mins" type="number" inputmode="numeric" min="1" max="180" value="25" aria-label="Reading minutes">
+        <span class="unit" aria-hidden="true">min</span>
+      </div>
+    </div>
+    <div class="field">
+      <span class="label" id="easy-l">Papers</span>
+      <div class="seg" role="group" aria-labelledby="easy-l">
+        <button id="easy-on" aria-pressed="true">Date night — anyone can follow</button>
+        <button id="easy-off" aria-pressed="false">Anything</button>
+      </div>
+    </div>
+    <div class="field paperonly">
+      <span class="label" id="talk-l">Talk clock</span>
+      <div class="seg" role="group" aria-labelledby="talk-l">
+        <button class="tpreset" data-v="15" aria-pressed="false">15</button>
+        <button class="tpreset" data-v="30" aria-pressed="true">30</button>
+        <button class="tpreset" data-v="45" aria-pressed="false">45</button>
+        <input id="talkmins" type="number" inputmode="numeric" min="1" max="180" value="30" aria-label="Talk minutes">
+        <span class="unit" aria-hidden="true">min</span>
+      </div>
+    </div>
+    <button id="deal" class="deal">DEAL</button>
+    <div class="known">
+      <button id="toggleknown" aria-expanded="false" aria-controls="knownpanel">What I already know — <span class="sum" id="knownsum">nothing ticked yet</span></button>
       <div id="knownpanel" hidden>
-        <p class="hint">Tick the areas you'd call yourself at home in. <b>Far from what I know</b>
-          then avoids them; <b>close to home</b> draws only from them.
-          Unfiled oddities count as unknown territory.</p>
-        <div class="chips" id="chips"></div>
+        <p>Tick the areas you know well. “Far from what I know” steers away from them; “Close to home” leans in.</p>
+        <div id="chips"></div>
       </div>
     </div>
   </section>
 
-  <button class="deal" id="deal">Deal <span class="kbd">space</span></button>
+  <main>
+    <article id="card" class="is-empty" aria-live="polite" aria-label="Dealt card">
+      <div><div class="empty-t">Nothing in the post yet.</div><div class="empty-s">Press Deal and a card arrives here.</div></div>
+    </article>
+  </main>
 
-  <article class="card" id="card" aria-live="polite"></article>
-
-  <section class="log">
-    <div class="loghead">
-      <h2 class="mark" style="font-size:16px">The log</h2>
-      <span class="tagline"><span id="logcount">nothing yet</span>
-        <button class="linkish" id="exportlog" hidden>export</button>
-        <button class="linkish" id="exportfixes" hidden>export fixes</button>
-        <button class="linkish" id="importlog">import</button>
-        <button class="linkish" id="clearlog" hidden>clear</button></span>
-      <input type="file" id="importfile" accept="application/json,.json" hidden>
+  <section class="log" aria-labelledby="loghead">
+    <div class="log-head">
+      <h2 id="loghead">The log</h2>
+      <span id="logcount">nothing yet</span>
+      <div class="log-links">
+        <button id="exportlog">export</button>
+        <button id="exportfixes">export fixes</button>
+        <button id="importlog">import</button>
+        <button id="clearlog">clear</button>
+      </div>
+      <input id="importfile" type="file" accept="application/json,.json" hidden>
     </div>
-    <div id="logbody"></div>
+    <ol id="logbody"></ol>
+    <p class="log-empty" id="logempty">Cards you finish or pass on are listed here, in this browser only.</p>
   </section>
 
-  <p class="foot" id="foot"></p>
+  <footer id="foot"></footer>
 </div>
 
-<div class="clockbar" id="clockbar" hidden>
-  <div>
-    <div class="phase" id="phase">Research</div>
-    <div class="digits" id="digits" role="timer" aria-live="off">25:00</div>
+<div class="handout" aria-hidden="true"></div>
+
+<div id="clockbar" role="timer" aria-label="Clock" hidden>
+  <div class="wrap">
+    <span id="phase">READ</span>
+    <span id="digits">25:00</span>
+    <div class="cb-acts">
+      <button id="c-go">Pause</button>
+      <button id="c-skip">Next phase</button>
+      <button id="c-stop">Stop</button>
+    </div>
   </div>
-  <button class="cbtn go" id="c-go">Pause</button>
-  <button class="cbtn" id="c-skip">Next phase</button>
-  <button class="cbtn" id="c-stop">Stop</button>
 </div>
 
 <script src="corpus.js"></script>
@@ -283,11 +373,13 @@ button{font-family:var(--ui);cursor:pointer;color:inherit}
 (function(){
 "use strict";
 var SEEDS = window.SEEDS;
-var P = window.PROMPTS || { questions:[], lenses:(SEEDS && SEEDS.lenses) || [], talk:[] };
+var P = window.PROMPTS || { questions:[], lenses:[], talk:[] };
 var $ = function(id){ return document.getElementById(id); };
+var $$ = function(sel, root){ return [].slice.call((root || document).querySelectorAll(sel)); };
 var KEY = "coldopen.v1";
 var BANDS = ["brief article", "moderate article", "substantial article", "very long article"];
 var DAY = 864e5;
+var MON = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
 // Why a card was passed, and how long before it can come back.
 var REASONS = [
   {k:"known", n:"Already know it", days:180},
@@ -302,10 +394,12 @@ var SCORES = {
   paper:  { f:"a", name:"Date-night rating", n:["Specialists only","A keen outsider gets the gist","Followable with some effort","Anyone could argue about it"] },
   sprint: { f:"k", name:"Talkability",       n:["One joke, no talk","Thin, but there's something","A solid five minutes","Could talk for an hour"] }
 };
+var EMPTY = '<div><div class="empty-t">Nothing in the post yet.</div>'
+  + '<div class="empty-s">Press Deal and a card arrives here.</div></div>';
 
 var S = { mode:"sprint", fam:"any", known:[], mins:{sprint:25,paper:30}, talk:30, easy:true,
           card:null, log:[], recent:[], notice:"", fixes:{ papers:{}, topics:{} } };
-var DB = null, SAMPLE = null, DOWNLOADS = null;
+var noticeId = null;
 
 /* ---------- persistence ---------- */
 function loadLocal(){
@@ -329,11 +423,6 @@ function saveLocal(){
       fam:S.fam, known:S.known, mins:S.mins, talk:S.talk, easy:S.easy, mode:S.mode, log:S.log.slice(0,300), fixes:S.fixes
     }));
   }catch(e){}
-}
-function saveSettings(){
-  saveLocal();
-  if(DB) DB.doc("settings/main").set({fam:S.fam, known:S.known, mins:S.mins, talk:S.talk, easy:S.easy})
-    .catch(function(){});
 }
 function mergeLog(list){
   var byKey = {};
@@ -372,14 +461,15 @@ function fixCount(){ return Object.keys(S.fixes.papers).length + Object.keys(S.f
 
 /* ---------- drawing ---------- */
 function pool(){ return S.mode === "sprint" ? SEEDS.topics : SEEDS.papers; }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 // Sprint: one guiding question per group, avoiding the ones on the last card.
 function sprintQuestions(){
   var qs = P.questions.map(function(g){
-    var pool = g.q.filter(function(q){ return S.recent.indexOf(q) === -1; });
-    return pick(pool.length ? pool : g.q);
+    var fresh = g.q.filter(function(q){ return S.recent.indexOf(q) === -1; });
+    return pick(fresh.length ? fresh : g.q);
   });
   S.recent = qs.slice();
-  return { n:"Five questions", qs:qs };
+  return { n:"Five questions", s:"Five questions", qs:qs };
 }
 // Paper: lenses that need measurements aren't dealt for theory, model or method papers.
 function paperLens(item){
@@ -399,10 +489,10 @@ function blocked(e, now){
   var r = reason(e.why), at = Date.parse(e.at);
   return isNaN(at) || now - at < (r ? r.days : 180) * DAY;
 }
-
 function eligible(){
   var seen = {}, now = Date.now();
   S.log.forEach(function(e){ if(blocked(e, now)) seen[e.t] = 1; });
+  if(S.card) seen[S.card.item.t] = 1;
   var p = pool().filter(function(x){ return !seen[x.t]; });
   if(S.easy){
     var easy = p.filter(function(x){ return score(x) >= EASY_MIN[S.mode]; });
@@ -418,14 +508,18 @@ function eligible(){
   if(filtered.length) return filtered;
   return p.length ? p : pool();
 }
-function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-
 function draw(){
   stopClock();
   var item = pick(eligible());
   var shape = S.mode === "sprint" ? sprintQuestions() : paperLens(item);
-  S.card = { item:item, shape:shape, ai:null, aiState:"idle", passing:false };
+  S.card = { item:item, shape:shape, mode:S.mode };
   renderCard(true);
+}
+function clearCard(){
+  S.card = null;
+  var el = $("card");
+  el.className = "is-empty"; el.removeAttribute("data-mode"); el.innerHTML = EMPTY;
+  renderHandout();
 }
 
 /* ---------- rendering ---------- */
@@ -435,235 +529,157 @@ function esc(s){
   });
 }
 function nf(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
-function link(href, text, quiet){
-  return '<a class="src' + (quiet ? " quiet" : "") + '" href="' + esc(href)
-    + '" target="_blank" rel="noopener noreferrer">' + text + " &#8599;</a>";
+function pad(n){ return (n < 10 ? "0" : "") + n; }
+function today(){ var d = new Date(); return pad(d.getDate()) + " " + MON[d.getMonth()] + " " + d.getFullYear(); }
+function areaName(d){ return d === "Wildcard" ? "unfiled" : d.toLowerCase(); }
+function serial(c){
+  var i = pool().indexOf(c.item) + 1;
+  return (c.mode === "sprint" ? "SPR·" : "PPR·") + ("0000" + i).slice(-4);
+}
+function link(href, text){
+  return '<a href="' + esc(href) + '" target="_blank" rel="noopener noreferrer">' + text + " &#8599;</a>";
+}
+function paperMeta(it){
+  return it.j + " · " + it.y + (it.f ? " · " + it.f : "") + (it.pg ? " · " + it.pg + " pages" : "")
+    + " · cited " + nf(it.c) + " times";
+}
+function ratingText(c){
+  var it = c.item, sc = SCORES[c.mode], v = score(it, c.mode);
+  var t = sc.name + " " + v + "/3 — " + sc.n[v].toLowerCase();
+  if(c.mode === "paper") t += " · " + (it.e === 0 ? "theory, model or method" : "reports its own data");
+  if(S.fixes[kindOf(c.mode)][keyOf(it.t)]) t += " · corrected here";
+  return t;
 }
 
 function renderCard(animate){
   var c = S.card, el = $("card");
-  if(!c){ el.innerHTML = ""; return; }
-  var it = c.item, isPaper = S.mode === "paper";
-  var meta = isPaper
-    ? esc(it.j) + " &middot; " + esc(it.y) + (it.f ? " &middot; " + esc(it.f) : "")
-      + (it.pg ? " &middot; " + it.pg + " pages" : "")
-      + " &middot; cited " + nf(it.c) + " times"
-    : "Wikipedia &middot; " + BANDS[it.z || 0]
-      + (it.o ? " &middot; from the unusual-articles list" : "");
-  var h = "";
-  var domTxt = it.d === "Wildcard" ? "unfiled" : it.d.toLowerCase();
-  if(!isPaper && it.o) domTxt += " &middot; oddity";
-  h += '<div class="cardtop"><span class="stamp">' + esc(c.shape.n) + "</span>";
-  h += '<span class="dom">' + domTxt + "</span></div>";
-  h += '<h1 class="title">' + esc(it.t) + "</h1>";
-  if(!isPaper && it.b) h += '<p class="deck">' + esc(it.b) + "</p>";
-  h += '<p class="meta">' + meta + "</p>";
-  h += renderRating(c);
-  h += '<p class="extract">' + esc(it.x) + "</p>";
-  if(isPaper){
-    h += '<div class="angle"><span class="lbl">Read it for this</span>';
-    h += "<p>" + esc(c.shape.p) + "</p></div>";
-  }else{
-    h += '<div class="angle"><span class="lbl">Guiding questions &mdash; one per talk card</span><ol class="qs">';
+  if(!c){ clearCard(); return; }
+  var it = c.item, sp = c.mode === "sprint";
+  el.className = ""; el.dataset.mode = c.mode;
+  var tag = sp ? (it.o ? "oddity" : "") : "";
+  var meta = sp ? "Wikipedia · " + BANDS[it.z || 0] + (it.o ? " · from the unusual-articles list" : "")
+                : paperMeta(it);
+  var h = '<div class="card-frame"><div class="card-sheet">';
+  h += '<div class="card-head"><div class="card-head-text">';
+  h += '<p class="address">' + (sp ? "By air, to the curious —" : "By air, for two —") + "<br>"
+     + esc(areaName(it.d)) + (tag ? " · " + tag : "") + "</p>";
+  h += '<h2 class="title">' + esc(it.t) + "</h2>";
+  if(sp && it.b) h += '<p class="blurb">' + esc(it.b) + "</p>";
+  h += '</div><div class="franking"><div class="postmark" aria-hidden="true">COLD OPEN<br>' + today()
+     + "<br>" + serial(c) + "</div>";
+  h += '<div class="stamp"><b aria-hidden="true">' + (sp ? "5" : "2") + "</b>" + esc(c.shape.s || c.shape.n) + "</div></div></div>";
+  h += '<div class="meta"><span>' + esc(meta) + '</span><span class="rating">' + esc(ratingText(c))
+     + ' · <button class="linkbtn" data-act="fix" aria-expanded="false">fix this</button></span></div>';
+  h += renderFixer(c);
+  h += '<div class="cols">';
+  if(sp){
+    h += '<div class="extract"><p>' + esc(it.x) + '</p><div class="links">' + link(it.u, "Open the article") + "</div></div>";
+    h += '<div class="angle"><span class="label">One for each card of your talk</span><ol class="qs">';
     c.shape.qs.forEach(function(q){ h += "<li>" + esc(q) + "</li>"; });
     h += "</ol></div>";
+  }else{
+    h += '<div class="extract"><span class="label">Abstract</span><p>' + esc(it.x) + '</p><div class="links">';
+    if(it.pdf){
+      h += link(it.pdf, "Open the PDF");
+      if(it.u && it.u !== it.pdf) h += link(it.u, "Article page");
+    }else h += link(it.u, "Open the paper");
+    h += "</div></div>";
+    h += '<div class="angle"><span class="label">Read it for this</span><p class="lens">' + esc(c.shape.p) + "</p></div>";
   }
-  h += '<div class="srcs">';
-  if(!isPaper) h += link(it.u, "Open the article");
-  else if(it.pdf){
-    h += link(it.pdf, "Open the PDF");
-    if(it.u && it.u !== it.pdf) h += link(it.u, "Article page", true);
-  }
-  else h += link(it.u, "Open the paper");
   h += "</div>";
-  if(S.notice){ h += '<p class="notice">' + esc(S.notice) + "</p>"; S.notice = ""; }
-  h += '<div id="ai"></div>';
-  h += '<div class="acts">';
-  h += '<button class="act primary" id="startclock">Start the clock</button>';
-  h += '<button class="act" id="redeal">Deal another</button>';
-  h += '<button class="act" id="pass" aria-expanded="' + c.passing + '">Pass &mdash; not this one</button>';
-  h += '<button class="act" id="logit">Log it as done</button>';
-  if(isPaper){
-    h += '<button class="act" id="invite">Copy invite</button>';
-    h += '<button class="act" id="print">Print handout</button>';
-  }
-  if(SAMPLE) h += '<button class="act" id="askai">' + (isPaper ? "Reading notes" : "Sharpen it") + "</button>";
+  h += '<div class="acts"><button class="act primary" data-act="go">Start the clock</button>'
+     + '<button class="act" data-act="deal">Deal another</button>'
+     + '<button class="act" data-act="pass">' + (sp ? "Pass — not this one" : "Pass") + "</button>"
+     + '<span class="spacer"></span><button class="act quiet" data-act="done">Log it as done</button>';
+  if(!sp) h += '<button class="act quiet" data-act="invite">Copy invite</button>'
+             + '<button class="act quiet" data-act="print">Print handout</button>';
   h += "</div>";
-  if(c.passing){
-    h += '<div class="reasons"><span class="lbl">Why?</span>';
-    REASONS.forEach(function(r){
-      h += '<button class="chip" data-why="' + r.k + '">' + esc(r.n) + "</button>";
-    });
-    h += "</div>";
-  }
-  if(isPaper) h += '<div class="handout" id="handout"></div>';
+  h += '<div class="reasons" hidden><span class="label">Why? (optional)</span>';
+  REASONS.forEach(function(r){ h += '<button class="chip" data-reason="' + r.k + '">' + esc(r.n) + "</button>"; });
+  h += '<button class="chip" data-reason="">Just pass</button>'
+     + '<button class="act quiet" data-act="cancelpass">Never mind</button></div>';
+  h += '<pre class="copybox" hidden></pre>';
+  h += '<p class="notice" role="status" hidden></p>';
+  h += "</div></div>";
   el.innerHTML = h;
   el.classList.remove("dealt");
   if(animate){ void el.offsetWidth; el.classList.add("dealt"); }
-  renderAI();
-  $("startclock").onclick = startClock;
-  $("redeal").onclick = draw;
-  $("pass").onclick = function(){ c.passing = !c.passing; renderCard(false); };
-  $("logit").onclick = function(){ record("done"); draw(); };
-  [].forEach.call(el.querySelectorAll("[data-why]"), function(b){
-    b.onclick = function(){ record("passed", b.dataset.why); draw(); };
-  });
-  if($("invite")) $("invite").onclick = invite;
-  if($("print")) $("print").onclick = function(){ window.print(); };
-  if($("askai")) $("askai").onclick = askAI;
-  wireRating(c);
+  renderHandout();
+  if(S.notice){ notice(S.notice); S.notice = ""; }
 }
 
-// "Date-night rating 2/3 · reports its own data · fix" under the meta line, and its editor.
-function renderRating(c){
-  var it = c.item, sc = SCORES[S.mode], v = score(it), fixed = !!S.fixes[kindOf(S.mode)][keyOf(it.t)];
-  var h = '<p class="rating"><span>' + sc.name + " " + v + "/3 &mdash; " + esc(sc.n[v].toLowerCase()) + "</span>";
-  if(S.mode === "paper") h += "<span>&middot; " + (it.e === 0 ? "theory, model or method" : "reports its own data") + "</span>";
-  if(fixed) h += "<span>&middot; corrected here</span>";
-  h += '<button class="linkish" id="fixbtn" aria-expanded="' + !!c.fixing + '">' + (c.fixing ? "done" : "fix this") + "</button></p>";
-  if(!c.fixing) return h;
-  h += '<div class="fixer"><div class="field"><span class="lbl">' + sc.name + '</span><div class="seg" role="group">';
+function renderFixer(c){
+  var it = c.item, sc = SCORES[c.mode], v = score(it, c.mode);
+  var h = '<div class="fixer" hidden><span class="label">Fix this card</span>';
+  h += '<div class="row"><div class="seg" role="group" aria-label="' + esc(sc.name) + '">';
   sc.n.forEach(function(n, i){
-    h += '<button data-score="' + i + '" aria-pressed="' + (i === v) + '" title="' + esc(n) + '">' + i + " &middot; " + esc(n) + "</button>";
+    h += '<button data-rate="' + i + '" aria-pressed="' + (i === v) + '">' + i + "/3<small>" + esc(n) + "</small></button>";
   });
-  h += '</div></div><div class="row"><div class="field"><span class="lbl">Area</span><select id="fixdom">';
+  h += '</div></div><div class="row"><label class="label" for="fix-area">Area</label><select id="fix-area" class="fix-area">';
   SEEDS.domains.forEach(function(d){
-    h += '<option' + (d === it.d ? " selected" : "") + ">" + esc(d) + "</option>";
+    h += "<option" + (d === it.d ? " selected" : "") + ">" + esc(d) + "</option>";
   });
-  h += "</select></div>";
-  if(S.mode === "paper"){
-    h += '<div class="field"><span class="lbl">Kind of paper</span><div class="seg" role="group">'
-      + '<button data-e="1" aria-pressed="' + (it.e !== 0) + '">Reports its own data</button>'
-      + '<button data-e="0" aria-pressed="' + (it.e === 0) + '">Theory, model or method</button></div></div>';
+  h += "</select>";
+  if(c.mode === "paper"){
+    h += '<div class="seg" role="group" aria-label="Kind of paper">'
+       + '<button data-e="1" aria-pressed="' + (it.e !== 0) + '">Reports its own data</button>'
+       + '<button data-e="0" aria-pressed="' + (it.e === 0) + '">Theory, model or method</button></div>';
   }
-  h += "</div></div>";
+  h += '</div><div class="row"><button class="act primary" data-act="savefix">Save fix</button>'
+     + '<button class="act quiet" data-act="cancelfix">Cancel</button></div></div>';
   return h;
 }
-function wireRating(c){
-  var it = c.item, f = SCORES[S.mode].f;
-  $("fixbtn").onclick = function(){ c.fixing = !c.fixing; renderCard(false); };
-  if(!c.fixing) return;
-  [].forEach.call(document.querySelectorAll("[data-score]"), function(b){
-    b.onclick = function(){ var o = {}; o[f] = +b.dataset.score; setFix(it, S.mode, o); renderCard(false); };
-  });
-  [].forEach.call(document.querySelectorAll("[data-e]"), function(b){
-    b.onclick = function(){ setFix(it, S.mode, { e:+b.dataset.e }); renderCard(false); };
-  });
-  $("fixdom").onchange = function(){ setFix(it, S.mode, { d:this.value }); renderCard(false); };
+
+function notice(msg){
+  var n = document.querySelector("#card .notice");
+  if(!n) return;
+  n.textContent = msg; n.hidden = false;
+  clearTimeout(noticeId);
+  noticeId = setTimeout(function(){ n.hidden = true; }, 5000);
 }
 
+/* ---------- handout (print only) ---------- */
 function renderHandout(){
-  var box = $("handout"); if(!box) return;
-  var a = S.card.ai && S.card.aiState === "ok" ? S.card.ai : {};
-  var talk = a.talk && a.talk.length ? a.talk : P.talk;
-  var h = "";
-  if(a.watch && a.watch.length){
-    h += "<h2>Watch for</h2><ul>";
-    a.watch.forEach(function(w){ h += "<li>" + esc(w) + "</li>"; });
-    h += "</ul>";
-  }
-  h += "<h2>Afterwards, talk about</h2><ol>";
-  (talk || []).forEach(function(t){ h += "<li>" + esc(t) + "</li>"; });
-  h += "</ol>";
-  h += "<h2>Notes</h2><div class=\"lines\"></div>";
+  var box = document.querySelector(".handout"), c = S.card;
+  if(!c || c.mode !== "paper"){ box.innerHTML = ""; return; }
+  var it = c.item, h = "";
+  h += '<div class="h-mast"><span>Cold Open · a paper for two</span><span>' + today() + "</span></div>";
+  h += '<span class="h-stamp">' + esc(c.shape.n) + "</span><h1>" + esc(it.t) + "</h1>";
+  h += '<p class="h-meta">' + esc(paperMeta(it)) + "</p>";
+  h += '<section class="h-lens"><h2>Read it for this</h2><p>' + esc(c.shape.p) + "</p></section>";
+  h += '<section class="h-abs"><h2>Abstract</h2><p>' + esc(it.x) + "</p></section>";
+  h += '<p class="h-url"><b>Find it at</b> ' + esc(it.u) + (it.pdf && it.pdf !== it.u ? "<br><b>PDF</b> " + esc(it.pdf) : "") + "</p>";
+  h += "<section><h2>Afterwards, talk about</h2><ol>";
+  (P.talk || []).forEach(function(t){ h += "<li>" + esc(t) + "</li>"; });
+  h += "</ol></section>";
+  h += '<section class="h-notes"><h2>Notes</h2><div class="h-lines">' + new Array(11).join("<div></div>") + "</div></section>";
+  h += '<div class="h-foot"><span>' + serial(c) + "</span><span>Read on paper. Talk it over.</span></div>";
   box.innerHTML = h;
 }
 
 function inviteText(){
   var c = S.card, it = c.item;
-  return "Date night reading: “" + it.t + "” (" + it.j + ", " + it.y
-    + (it.pg ? ", " + it.pg + " pages" : "") + ")\n" + (it.pdf || it.u) + "\n\n"
-    + "Read it for this — " + c.shape.n + ": " + c.shape.p + "\n\n"
+  return "Paper date? “" + it.t + "” (" + it.j + ", " + it.y
+    + (it.pg ? ", " + it.pg + " pages" : "") + ") — " + (it.pdf || it.u) + "\n"
+    + "Read it for this: " + c.shape.p + "\n"
     + S.mins.paper + " minutes to read, then " + S.talk + " to talk it over.";
 }
 function invite(){
-  var text = inviteText(), btn = $("invite");
+  var text = inviteText();
   function shown(){
-    $("ai").innerHTML = '<div class="aiblock"><span class="lbl">Copy this to your date</span>'
-      + '<p style="white-space:pre-wrap;user-select:all">' + esc(text) + "</p></div>";
+    var box = document.querySelector("#card .copybox");
+    box.textContent = text; box.hidden = false;
+    notice("Couldn't copy here. The invite is below; select it and copy.");
   }
-  if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(text).then(function(){
-      if(btn) btn.textContent = "Invite copied";
-    }, shown);
-  }else shown();
+  if(navigator.clipboard && navigator.clipboard.writeText)
+    navigator.clipboard.writeText(text).then(function(){ notice("Invite copied. Paste it into a message."); }, shown);
+  else shown();
 }
 
-function renderAI(){
-  var box = $("ai"); if(!box) return;
-  var c = S.card;
-  renderHandout();
-  if(c.aiState === "idle"){ box.innerHTML = ""; return; }
-  if(c.aiState === "loading"){
-    box.innerHTML = '<div class="aiblock"><p class="spin">Asking Claude&hellip; this takes a few seconds.</p></div>';
-    return;
-  }
-  if(c.aiState === "error"){
-    box.innerHTML = '<div class="aiblock"><p class="spin">' + esc(c.ai) + "</p></div>";
-    return;
-  }
-  var a = c.ai, h = '<div class="aiblock">';
-  if(S.mode === "paper"){
-    if(a.why) h += '<span class="lbl">Why this one</span><p>' + esc(a.why) + "</p>";
-    if(a.watch && a.watch.length){
-      h += '<span class="lbl" style="display:block;margin-top:14px">Watch for</span><ul>';
-      a.watch.forEach(function(w){ h += "<li>" + esc(w) + "</li>"; });
-      h += "</ul>";
-    }
-    if(a.talk && a.talk.length){
-      h += '<span class="lbl" style="display:block;margin-top:14px">Talk about</span><ol>';
-      a.talk.forEach(function(t){ h += "<li>" + esc(t) + "</li>"; });
-      h += "</ol>";
-    }
-  }else{
-    if(a.angles && a.angles.length){
-      h += '<span class="lbl">Threads worth pulling</span><ol>';
-      a.angles.forEach(function(x){ h += "<li>" + esc(x) + "</li>"; });
-      h += "</ol>";
-    }
-    if(a.avoid) h += '<p class="warn"><b>Don\'t bother with:</b> ' + esc(a.avoid) + "</p>";
-  }
-  box.innerHTML = h + "</div>";
-}
-
-function askAI(){
-  var c = S.card; if(!c || !SAMPLE) return;
-  c.aiState = "loading"; renderAI();
-  var it = c.item, p;
-  if(S.mode === "paper"){
-    p = "Two curious non-specialists are going to read this paper on paper tonight and talk about it. "
-      + "They are reading through this lens: \"" + c.shape.n + " - " + c.shape.p + "\"\n\n"
-      + "PAPER: " + it.t + " (" + it.j + ", " + it.y + ")\nABSTRACT: " + it.x + "\n\n"
-      + "Reply with JSON only: {\"why\": one sentence on what makes this worth an evening, "
-      + "\"watch\": [2-3 specific things to notice while reading, each one sentence], "
-      + "\"talk\": [3 questions they could genuinely disagree about afterwards, each one sentence]}. "
-      + "Be concrete and specific to this paper. No preamble.";
-  }else{
-    p = "Someone has " + S.mins.sprint + " minutes to research this and then give a 5-minute talk, with no prior knowledge. "
-      + "Their talk answers these guiding questions, one per card:\n- " + c.shape.qs.join("\n- ") + "\n\n"
-      + "SUBJECT: " + it.t + "\nBACKGROUND: " + it.x + "\n\n"
-      + "Reply with JSON only: {\"angles\": [3-4 specific threads to chase in " + S.mins.sprint + " minutes, "
-      + "each one sentence, each pointing at something concrete and findable], "
-      + "\"avoid\": one sentence naming the obvious boring take they should skip}. "
-      + "Be specific to this subject, not generic research advice. No preamble.";
-  }
-  SAMPLE.json(p, {modelTier:"default"}).then(function(data){
-    if(S.card !== c) return;
-    c.ai = data; c.aiState = "ok"; renderAI();
-  }).catch(function(e){
-    if(S.card !== c) return;
-    var code = e && e.code;
-    if(code === "not_granted"){ SAMPLE = null; c.aiState = "idle"; renderCard(false); return; }
-    c.aiState = "error";
-    c.ai = code === "rate_limited" ? "Too many requests just now - try again in a minute."
-         : "Couldn't reach Claude for this one. The card still works.";
-    renderAI();
-  });
-}
-
+/* ---------- log ---------- */
 function record(kind, why){
   var c = S.card; if(!c) return;
-  var e = { t:c.item.t, u:c.item.u, d:c.item.d, s:c.shape.n, m:S.mode,
+  var e = { t:c.item.t, u:c.item.u, d:c.item.d, s:c.shape.n, m:c.mode,
             k:kind, at:new Date().toISOString() };
   if(why) e.why = why;
   S.log.unshift(e);
@@ -671,76 +687,47 @@ function record(kind, why){
   if(why === "known") learnKnown(e.d);
   // "Looks thin" is a rating correction too: one step down, exported with the other fixes.
   if(why === "thin"){
-    var o = {}; o[SCORES[S.mode].f] = Math.max(0, score(c.item) - 1);
-    setFix(c.item, S.mode, o);
+    var o = {}; o[SCORES[c.mode].f] = Math.max(0, score(c.item, c.mode) - 1);
+    setFix(c.item, c.mode, o);
   }
   renderLog(); saveLocal();
-  if(DB) DB.collection("sessions").doc().set(e).catch(function(){});
 }
-
 // Passing enough cards in one area as "already know it" ticks that area for you.
 function learnKnown(d){
   if(!d || d === "Wildcard" || S.known.indexOf(d) !== -1) return;
   var n = S.log.filter(function(e){ return e.why === "known" && e.d === d; }).length;
   if(n < LEARN_AFTER) return;
   S.known.push(d);
-  renderChips(); saveSettings();
+  syncSettings();
   S.notice = "Ticked “" + d + "” as somewhere you're at home — you've passed "
     + n + " of its cards as already known. Untick it under What I already know.";
 }
-
+function shortDate(at){
+  var d = new Date(at);
+  return isNaN(d) ? "" : d.getDate() + " " + MON[d.getMonth()].charAt(0) + MON[d.getMonth()].slice(1).toLowerCase();
+}
 function renderLog(){
-  var body = $("logbody"), n = S.log.filter(function(e){ return e.k === "done"; }).length;
-  $("logcount").innerHTML = S.log.length
-    ? nf(n) + " done &middot; " + nf(S.log.length - n) + " passed"
-    : "nothing yet";
-  $("clearlog").hidden = !S.log.length;
-  $("exportlog").hidden = !S.log.length;
-  $("exportfixes").hidden = !fixCount();
-  if(!S.log.length){
-    body.innerHTML = '<p class="empty">Sessions you finish land here, and stop coming up again. '
-      + 'Passed cards come back after a while.</p>';
-    return;
-  }
+  var n = S.log.filter(function(e){ return e.k === "done"; }).length;
+  $("logcount").textContent = S.log.length ? nf(n) + " done · " + nf(S.log.length - n) + " passed" : "nothing yet";
+  $("logempty").hidden = !!S.log.length;
+  $("exportlog").disabled = $("clearlog").disabled = !S.log.length;
+  $("exportfixes").disabled = !fixCount();
   var h = "";
   S.log.slice(0,40).forEach(function(e){
-    var d = new Date(e.at), r = reason(e.why);
-    var when = isNaN(d) ? "" : (d.getDate() + " " +
-      ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][d.getMonth()]);
-    h += '<div class="logrow' + (e.k === "passed" ? " passed" : "") + '">';
-    h += '<span class="when">' + esc(when) + "</span>";
-    h += '<span class="what"><b>' + esc(e.t) + "</b><small>"
-       + esc(e.s) + " &middot; " + esc(e.m === "paper" ? "paper" : "sprint") + "</small></span>";
-    h += '<span class="tag">' + (e.k === "passed" ? (r ? esc(r.n.toLowerCase()) : "passed") : "done") + "</span></div>";
+    var r = reason(e.why), status = e.k === "passed" ? "passed" + (r ? " · " + r.n.toLowerCase() : "") : "done";
+    h += '<li class="logrow" data-status="' + (e.k === "passed" ? "passed" : "done") + '">'
+       + '<span class="d">' + esc(shortDate(e.at)) + "</span>"
+       + '<span class="m">' + (e.m === "paper" ? "Paper" : "Sprint") + "</span>"
+       + '<span class="t">' + esc(e.t) + "</span>"
+       + '<span class="s">' + esc(status) + "</span></li>";
   });
-  body.innerHTML = h;
+  $("logbody").innerHTML = h;
 }
-
-// Inside the Claude viewer a page can't download directly; it offers the file
-// through the downloads capability and the viewer confirms. Anywhere else
-// (local, another host) a plain link download works.
 function download(name, obj){
-  var filename = name + "-" + new Date().toISOString().slice(0,10) + ".json";
-  var text = JSON.stringify(obj, null, 1);
-  if(DOWNLOADS){
-    DOWNLOADS.save({ filename:filename, data:text }).catch(function(e){
-      var code = e && e.code;
-      if(code === "declined") return;
-      S.notice = code === "rate_limited" ? "A save is already waiting for you to confirm."
-        : "Couldn't offer the file here (" + (code || "unavailable") + ").";
-      renderCard(false);
-    });
-    return;
-  }
-  if(window.claude){
-    S.notice = "Saving files isn't available in this view.";
-    renderCard(false);
-    return;
-  }
-  var blob = new Blob([text], { type:"application/json" });
+  var blob = new Blob([JSON.stringify(obj, null, 1)], { type:"application/json" });
   var a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = filename;
+  a.download = name + "-" + new Date().toISOString().slice(0,10) + ".json";
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
 }
@@ -755,6 +742,7 @@ function exportFixes(){
 function importLog(file){
   var rd = new FileReader();
   rd.onload = function(){
+    var msg;
     try{
       var o = JSON.parse(rd.result), list = Array.isArray(o) ? o : (o.log || []);
       if(!Array.isArray(list) || (!list.length && !o.fixes)) throw 0;
@@ -767,32 +755,34 @@ function importLog(file){
       });
       applyFixes();
       renderLog(); saveLocal();
-      S.notice = "Imported " + (S.log.length - before) + " new log entries and " + nfix + " rating fixes.";
-    }catch(e){ S.notice = "That file isn't a Cold Open log export."; }
-    renderCard(false);
+      msg = "Imported " + (S.log.length - before) + " new log entries and " + nfix + " rating fixes.";
+    }catch(e){ msg = "That file isn't a Cold Open log export."; }
+    if(S.card){ renderCard(false); notice(msg); } else alert(msg);
   };
   rd.readAsText(file);
 }
 
-/* ---------- clock ---------- */
-var T = { phases:[], i:0, left:0, running:false, tick:null };
-var AC = null;
-
+/* ---------- clock ----------
+   Counts against a wall-clock end time, so it stays right in a background tab. */
+var T = null, tickId = null, AC = null;
 function phasesFor(){
   var m = S.mins[S.mode];
   return S.mode === "sprint"
-    ? [{n:"Research", s:m*60}, {n:"Assemble the 5 cards", s:5*60}, {n:"Present", s:5*60}]
-    : [{n:"Read", s:m*60}, {n:"Talk it over", s:S.talk*60}];
+    ? [{n:"RESEARCH", s:m*60}, {n:"CARDS", s:5*60}, {n:"PRESENT", s:5*60}]
+    : [{n:"READ", s:m*60}, {n:"TALK", s:S.talk*60}];
 }
-function fmt(s){
-  var m = Math.floor(Math.abs(s)/60), r = Math.abs(s)%60;
-  return (s<0?"-":"") + m + ":" + (r<10?"0":"") + r;
-}
-function paintClock(){
-  var p = T.phases[T.i];
-  $("phase").textContent = p ? p.n : "";
-  $("digits").textContent = fmt(T.left);
-  $("c-go").textContent = T.running ? "Pause" : "Resume";
+function mmss(s){ s = Math.max(0, Math.round(s)); return pad(Math.floor(s/60)) + ":" + pad(s%60); }
+function drawClock(){
+  if(!T) return;
+  var p = T.ph[T.i], cb = $("clockbar");
+  $("phase").textContent = p.n;
+  $("digits").textContent = mmss(T.rem);
+  cb.style.setProperty("--p", String(1 - T.rem / p.s));
+  cb.dataset.final = String(T.rem <= 60);
+  cb.dataset.paused = String(!T.run);
+  $("c-go").textContent = T.run ? "Pause" : "Resume";
+  $("c-skip").innerHTML = T.i < T.ph.length - 1 ? 'Next<span class="wide"> phase</span>' : "Finish";
+  document.title = mmss(T.rem) + " " + p.n.toLowerCase() + " · Cold Open";
 }
 // Browsers only allow sound after a click, so the audio context is made on "Start the clock".
 function unlockAudio(){
@@ -801,31 +791,6 @@ function unlockAudio(){
     if(!AC && Ctx) AC = new Ctx();
     if(AC && AC.state === "suspended") AC.resume();
   }catch(e){}
-}
-function startClock(){
-  unlockAudio();
-  T.phases = phasesFor(); T.i = 0; T.left = T.phases[0].s; T.running = true;
-  $("clockbar").hidden = false;
-  paintClock();
-  if(T.tick) clearInterval(T.tick);
-  T.tick = setInterval(function(){
-    if(!T.running) return;
-    T.left--;
-    if(T.left === 0) chime();
-    if(T.left <= -3) nextPhase();
-    paintClock();
-  }, 1000);
-}
-function nextPhase(){
-  if(T.i < T.phases.length - 1){ T.i++; T.left = T.phases[T.i].s; }
-  else stopClock();
-  paintClock();
-}
-function stopClock(){
-  T.running = false;
-  if(T.tick) clearInterval(T.tick);
-  T.tick = null;
-  $("clockbar").hidden = true;
 }
 function chime(){
   try{
@@ -841,128 +806,161 @@ function chime(){
     });
   }catch(e){}
 }
+function startClock(){
+  if(!S.card) return;
+  unlockAudio();
+  var ph = phasesFor();
+  T = { ph:ph, i:0, rem:ph[0].s, run:true, end:Date.now() + ph[0].s * 1000 };
+  $("clockbar").hidden = false; document.body.classList.add("clock-on");
+  clearInterval(tickId); tickId = setInterval(tick, 250);
+  drawClock();
+}
+function tick(){
+  if(!T || !T.run) return;
+  T.rem = Math.max(0, Math.ceil((T.end - Date.now()) / 1000));
+  if(T.rem === 0){ chime(); nextPhase(); } else drawClock();
+}
+function pauseClock(){
+  if(!T) return;
+  if(T.run){ T.rem = Math.max(0, Math.ceil((T.end - Date.now()) / 1000)); T.run = false; }
+  else { T.run = true; T.end = Date.now() + T.rem * 1000; }
+  drawClock();
+}
+function nextPhase(){
+  if(!T) return;
+  T.i++;
+  if(T.i >= T.ph.length){ stopClock(); notice("Time. Log it as done, or deal another."); return; }
+  T.rem = T.ph[T.i].s; T.end = Date.now() + T.rem * 1000; T.run = true;
+  drawClock();
+}
+function stopClock(){
+  T = null; clearInterval(tickId);
+  $("clockbar").hidden = true; document.body.classList.remove("clock-on");
+  document.title = "Cold Open";
+}
 
-/* ---------- controls ---------- */
-function setFam(v){
-  S.fam = v;
-  ["far","any","close"].forEach(function(k){
-    $("fam-" + k).setAttribute("aria-pressed", String(k === v));
-  });
-  saveSettings();
-}
+/* ---------- settings ---------- */
+function press(btns, test){ btns.forEach(function(b){ b.setAttribute("aria-pressed", String(test(b))); }); }
 function clampMins(v, dflt){ return Math.max(1, Math.min(180, parseInt(v, 10) || dflt)); }
-function pressPresets(sel, v){
-  [].forEach.call(document.querySelectorAll(sel), function(b){
-    b.setAttribute("aria-pressed", String(parseInt(b.dataset.m, 10) === v));
-  });
-}
-function setMins(v){
-  v = clampMins(v, 25);
-  S.mins[S.mode] = v;
-  $("mins").value = v;
-  pressPresets(".mpreset", v);
-  saveSettings();
-}
-function setTalk(v){
-  S.talk = v = clampMins(v, 30);
-  $("talkmins").value = v;
-  pressPresets(".tpreset", v);
-  saveSettings();
-}
-function setEasy(v){
-  S.easy = v;
-  $("easy-on").setAttribute("aria-pressed", String(v));
-  $("easy-off").setAttribute("aria-pressed", String(!v));
-  saveSettings();
+function syncSettings(){
+  var sp = S.mode === "sprint";
+  document.body.dataset.mode = S.mode;
+  $("tab-sprint").setAttribute("aria-selected", String(sp));
+  $("tab-paper").setAttribute("aria-selected", String(!sp));
+  $("tab-sprint").tabIndex = sp ? 0 : -1; $("tab-paper").tabIndex = sp ? -1 : 0;
+  if(!S.known.length) S.fam = "any";
+  press([$("fam-far"), $("fam-any"), $("fam-close")], function(b){ return b.id === "fam-" + S.fam; });
+  $("fam-far").disabled = $("fam-close").disabled = !S.known.length;
+  $("mins-l").textContent = sp ? "Research clock" : "Reading clock";
+  $("mins").setAttribute("aria-label", sp ? "Research minutes" : "Reading minutes");
+  press($$(".mpreset"), function(b){ return +b.dataset.v === S.mins[S.mode]; });
+  $("mins").value = S.mins[S.mode];
+  $("easy-l").textContent = sp ? "Subjects" : "Papers";
+  $("easy-on").textContent = sp ? "Talkable — five minutes in it" : "Date night — anyone can follow";
+  press([$("easy-on")], function(){ return S.easy; });
+  press([$("easy-off")], function(){ return !S.easy; });
+  press($$(".tpreset"), function(b){ return +b.dataset.v === S.talk; });
+  $("talkmins").value = S.talk;
+  press($$("#chips .chip"), function(b){ return S.known.indexOf(b.dataset.area) > -1; });
+  $("knownsum").textContent = S.known.length
+    ? S.known.length + " ticked: " + S.known.map(areaName).join(", ") : "nothing ticked yet";
+  saveLocal();
 }
 function setMode(m){
   S.mode = m;
-  $("tab-sprint").setAttribute("aria-selected", String(m === "sprint"));
-  $("tab-paper").setAttribute("aria-selected", String(m === "paper"));
-  $("l-min").textContent = m === "sprint" ? "Research clock" : "Reading clock";
-  $("l-easy").textContent = m === "sprint" ? "Subjects" : "Papers";
-  $("easy-on").innerHTML = m === "sprint" ? "Talkable &mdash; five minutes in it" : "Date night &mdash; anyone can follow";
-  [].forEach.call(document.querySelectorAll(".paperonly"), function(el){ el.hidden = m !== "paper"; });
-  setMins(S.mins[m]);
-  saveSettings();
-  draw();
-}
-function renderChips(){
-  var box = $("chips"), h = "";
-  SEEDS.domains.forEach(function(d){
-    h += '<button class="chip" data-d="' + esc(d) + '" aria-pressed="'
-       + (S.known.indexOf(d) !== -1) + '">' + esc(d) + "</button>";
-  });
-  box.innerHTML = h;
-  [].forEach.call(box.querySelectorAll(".chip"), function(b){
-    b.onclick = function(){
-      var d = b.dataset.d, i = S.known.indexOf(d);
-      if(i === -1) S.known.push(d); else S.known.splice(i, 1);
-      b.setAttribute("aria-pressed", String(i === -1));
-      paintKnownCount(); saveSettings();
-    };
-  });
-  paintKnownCount();
-}
-function paintKnownCount(){
-  $("knowncount").textContent = S.known.length
-    ? S.known.length + (S.known.length === 1 ? " area ticked" : " areas ticked")
-    : "nothing ticked yet";
+  syncSettings();
+  if(S.card && S.card.mode !== m){ stopClock(); clearCard(); }
 }
 
 /* ---------- boot ---------- */
 if(!SEEDS){
-  $("card").innerHTML = '<p class="empty">The deck failed to load. Reload the page.</p>';
+  $("card").innerHTML = '<div><div class="empty-t">The deck failed to load.</div><div class="empty-s">Reload the page.</div></div>';
   return;
 }
 loadLocal();
 applyFixes();
-renderChips();
-setFam(S.fam);
-setEasy(S.easy);
-setTalk(S.talk);
-setMode(S.mode);
+$("chips").innerHTML = SEEDS.domains.map(function(d){
+  return '<button class="chip" data-area="' + esc(d) + '" aria-pressed="false">' + esc(areaName(d)) + "</button>";
+}).join("");
+syncSettings();
 renderLog();
 function easyCount(list, mode){
   return list.filter(function(x){ return score(x, mode) >= EASY_MIN[mode]; }).length;
 }
-$("foot").innerHTML = nf(SEEDS.topics.length) + " subjects (" + nf(easyCount(SEEDS.topics, "sprint"))
-  + " talkable) and " + nf(SEEDS.papers.length) + " open-access papers ("
-  + nf(easyCount(SEEDS.papers, "paper")) + " date-night friendly), with "
+$("foot").innerHTML = "Cold Open picks and times. The reading and notes happen on paper.<br>"
+  + nf(SEEDS.topics.length) + " subjects (" + nf(easyCount(SEEDS.topics, "sprint")) + " talkable) from Wikipedia and "
+  + nf(SEEDS.papers.length) + " open-access papers (" + nf(easyCount(SEEDS.papers, "paper")) + " date-night friendly), with "
   + P.questions.reduce(function(n, g){ return n + g.q.length; }, 0) + " guiding questions and "
-  + P.lenses.length + " reading lenses.<br>"
-  + "Subjects come from Wikipedia&rsquo;s unusual and featured articles and its science categories; "
-  + "papers from eLife, PLOS, the Royal Society, PNAS, Psychological Science, "
-  + "open-access humanities journals and others.";
+  + P.lenses.length + " reading lenses.";
 
-$("deal").onclick = draw;
 $("tab-sprint").onclick = function(){ setMode("sprint"); };
 $("tab-paper").onclick = function(){ setMode("paper"); };
-["far","any","close"].forEach(function(k){
-  $("fam-" + k).onclick = function(){ setFam(k); };
+document.querySelector(".tabs").addEventListener("keydown", function(e){
+  if(e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+  var n = S.mode === "sprint" ? "paper" : "sprint";
+  setMode(n); $("tab-" + n).focus();
 });
-$("easy-on").onclick = function(){ setEasy(true); draw(); };
-$("easy-off").onclick = function(){ setEasy(false); draw(); };
-[].forEach.call(document.querySelectorAll(".mpreset"), function(b){
-  b.onclick = function(){ setMins(b.dataset.m); };
-});
-[].forEach.call(document.querySelectorAll(".tpreset"), function(b){
-  b.onclick = function(){ setTalk(b.dataset.m); };
-});
-$("mins").onchange = function(){ setMins($("mins").value); };
-$("talkmins").onchange = function(){ setTalk($("talkmins").value); };
+["far","any","close"].forEach(function(f){ $("fam-" + f).onclick = function(){ S.fam = f; syncSettings(); }; });
+$$(".mpreset").forEach(function(b){ b.onclick = function(){ S.mins[S.mode] = +b.dataset.v; syncSettings(); }; });
+$("mins").onchange = function(){ S.mins[S.mode] = clampMins(this.value, S.mins[S.mode]); syncSettings(); };
+$("easy-on").onclick = function(){ S.easy = true; syncSettings(); };
+$("easy-off").onclick = function(){ S.easy = false; syncSettings(); };
+$$(".tpreset").forEach(function(b){ b.onclick = function(){ S.talk = +b.dataset.v; syncSettings(); }; });
+$("talkmins").onchange = function(){ S.talk = clampMins(this.value, S.talk); syncSettings(); };
 $("toggleknown").onclick = function(){
-  var p = $("knownpanel"), open = p.hidden;
-  p.hidden = !open;
-  $("toggleknown").setAttribute("aria-expanded", String(open));
+  var open = this.getAttribute("aria-expanded") !== "true";
+  this.setAttribute("aria-expanded", String(open));
+  $("knownpanel").hidden = !open;
 };
-$("clearlog").onclick = function(){
-  if(!confirm("Clear the log? Everything in it becomes drawable again.")) return;
-  S.log = []; renderLog(); saveLocal();
-  if(DB) DB.collection("sessions").get().then(function(snap){
-    snap.docs.forEach(function(d){ DB.doc("sessions/" + d.id).delete().catch(function(){}); });
-  }).catch(function(){});
+$("chips").onclick = function(e){
+  var b = e.target.closest(".chip"); if(!b) return;
+  var d = b.dataset.area, i = S.known.indexOf(d);
+  if(i > -1) S.known.splice(i, 1); else S.known.push(d);
+  syncSettings();
 };
+$("deal").onclick = draw;
+
+$("card").addEventListener("click", function(e){
+  var b = e.target.closest("button"); if(!b || !S.card) return;
+  var c = S.card, card = $("card");
+  var fx = card.querySelector(".fixer"), rs = card.querySelector(".reasons");
+  if(b.dataset.rate != null){ press($$("[data-rate]", fx), function(x){ return x === b; }); return; }
+  if(b.dataset.e != null){ press($$("[data-e]", fx), function(x){ return x === b; }); return; }
+  if(b.dataset.reason != null){
+    record("passed", b.dataset.reason || undefined);
+    S.notice = S.notice || "Passed and logged. Here's another.";
+    draw(); return;
+  }
+  switch(b.dataset.act){
+    case "go": startClock(); break;
+    case "deal": draw(); break;
+    case "pass": rs.hidden = false; fx.hidden = true; rs.querySelector("button").focus(); break;
+    case "cancelpass": rs.hidden = true; break;
+    case "done": record("done"); S.notice = S.notice || "Logged as done."; draw(); break;
+    case "fix":
+      fx.hidden = !fx.hidden; rs.hidden = true;
+      b.setAttribute("aria-expanded", String(!fx.hidden));
+      if(!fx.hidden) fx.querySelector("button").focus();
+      break;
+    case "cancelfix":
+      fx.hidden = true; card.querySelector('[data-act="fix"]').setAttribute("aria-expanded", "false"); break;
+    case "savefix":
+      var o = {}, r = fx.querySelector("[data-rate][aria-pressed=true]"), k = fx.querySelector("[data-e][aria-pressed=true]");
+      if(r) o[SCORES[c.mode].f] = +r.dataset.rate;
+      o.d = fx.querySelector(".fix-area").value;
+      if(k) o.e = +k.dataset.e;
+      setFix(c.item, c.mode, o);
+      renderCard(false);
+      notice("Fix saved on this device. Export fixes to send it upstream.");
+      break;
+    case "invite": invite(); break;
+    case "print": window.print(); break;
+  }
+});
+
+$("c-go").onclick = pauseClock;
+$("c-skip").onclick = nextPhase;
+$("c-stop").onclick = stopClock;
 $("exportlog").onclick = exportLog;
 $("exportfixes").onclick = exportFixes;
 $("importlog").onclick = function(){ $("importfile").click(); };
@@ -970,45 +968,16 @@ $("importfile").onchange = function(){
   if(this.files && this.files[0]) importLog(this.files[0]);
   this.value = "";
 };
-$("c-go").onclick = function(){ T.running = !T.running; paintClock(); };
-$("c-skip").onclick = nextPhase;
-$("c-stop").onclick = stopClock;
+$("clearlog").onclick = function(){
+  if(!confirm("Clear the log? Everything in it becomes drawable again.")) return;
+  S.log = []; renderLog(); saveLocal();
+};
 document.addEventListener("keydown", function(e){
-  if(e.code !== "Space" || e.target.tagName === "INPUT" || e.target.tagName === "BUTTON") return;
+  if(e.code !== "Space" || e.target.closest("input,select,textarea,button")) return;
   e.preventDefault();
-  if($("clockbar").hidden) draw();                  // mid-session, space pauses instead of re-dealing
-  else { T.running = !T.running; paintClock(); }
+  if(T) pauseClock();                 // mid-session, space pauses instead of re-dealing
+  else draw();
 });
-
-/* capabilities light up later, or never */
-if(window.claude && window.claude.use){
-  window.claude.use("downloads").then(function(d){ DOWNLOADS = d || null; }).catch(function(){});
-
-  window.claude.use("sample").then(function(s){
-    SAMPLE = s || null;
-    if(SAMPLE) renderCard(false);
-  }).catch(function(){});
-
-  window.claude.use("db").then(function(db){
-    if(!db) return;
-    DB = db;
-    return DB.doc("settings/main").get().then(function(snap){
-      if(snap.exists){
-        var o = snap.data() || {};
-        if(o.fam) setFam(o.fam);
-        if(Array.isArray(o.known)){ S.known = o.known; renderChips(); }
-        if(o.mins){ S.mins = Object.assign(S.mins, o.mins); setMins(S.mins[S.mode]); }
-        if(o.talk) setTalk(o.talk);
-        if(typeof o.easy === "boolean") setEasy(o.easy);
-      }
-      DB.collection("sessions").orderBy("at", "desc").limit(300)
-        .onSnapshot(function(snap2){
-          mergeLog(snap2.docs.map(function(d){ return d.data() || {}; }));
-          renderLog(); saveLocal();
-        }, function(){});
-    });
-  }).catch(function(){});
-}
 })();
 </script>
 </body>

@@ -5,7 +5,7 @@
 // questions, one per talk card. Questions must work for any subject: a person,
 // a place, a species, a machine, an idea.
 //
-// Paper: a lens with needs:"data" is only dealt for papers that report their own
+// Paper: s is the short name on the card's stamp. A lens with needs:"data" is only dealt for papers that report their own
 // measurements, so "find the effect size" never lands on a theory paper.
 window.PROMPTS = {
 questions: [
@@ -51,18 +51,18 @@ questions: [
  ]}
 ],
 lenses: [
- {n:"What would have changed their mind", p:"Find the result that would have falsified this. Did they go looking for it?"},
- {n:"The one figure", p:"Pick the single figure the whole paper rests on. Try to redraw it from memory afterwards."},
- {n:"Methods first", p:"Read the methods before the results, and write down what you predict they found.", needs:"data"},
- {n:"The leap", p:"Mark the exact sentence where the data stops and the interpretation starts."},
- {n:"A sample of what", p:"Who or what was actually studied — and what does that honestly let them claim?", needs:"data"},
- {n:"The experiment they didn't run", p:"What's the obvious next study, and why do you think it isn't in here?"},
- {n:"No jargon", p:"Explain the finding to each other in one sentence, out loud, using no technical words."},
- {n:"The number that matters", p:"Find the effect size. Set aside significance — is it big enough to care about?", needs:"data"},
- {n:"Referee", p:"One of you is the reviewer who wants it rejected, the other the author. Swap halfway through the talk."},
- {n:"Headline", p:"Each write the newspaper headline this deserves, and the one it would actually get. Compare."},
- {n:"Would you fund it", p:"You have the grant money. Would you pay for this again, knowing the result? What would you cut?"},
- {n:"So what for us", p:"Find one thing in here that should change how either of you actually lives, votes or spends. Or argue nothing should."}
+ {n:"What would have changed their mind", s:"Mind changer", p:"Find the result that would have falsified this. Did they go looking for it?"},
+ {n:"The one figure", s:"One figure", p:"Pick the single figure the whole paper rests on. Try to redraw it from memory afterwards."},
+ {n:"Methods first", s:"Methods first", p:"Read the methods before the results, and write down what you predict they found.", needs:"data"},
+ {n:"The leap", s:"The leap", p:"Mark the exact sentence where the data stops and the interpretation starts."},
+ {n:"A sample of what", s:"The sample", p:"Who or what was actually studied — and what does that honestly let them claim?", needs:"data"},
+ {n:"The experiment they didn't run", s:"Next study", p:"What's the obvious next study, and why do you think it isn't in here?"},
+ {n:"No jargon", s:"No jargon", p:"Explain the finding to each other in one sentence, out loud, using no technical words."},
+ {n:"The number that matters", s:"Effect size", p:"Find the effect size. Set aside significance — is it big enough to care about?", needs:"data"},
+ {n:"Referee", s:"Referee", p:"One of you is the reviewer who wants it rejected, the other the author. Swap halfway through the talk."},
+ {n:"Headline", s:"Headline", p:"Each write the newspaper headline this deserves, and the one it would actually get. Compare."},
+ {n:"Would you fund it", s:"Fund it?", p:"You have the grant money. Would you pay for this again, knowing the result? What would you cut?"},
+ {n:"So what for us", s:"So what", p:"Find one thing in here that should change how either of you actually lives, votes or spends. Or argue nothing should."}
 ],
 // Printed on the handout when Claude's own "talk about" questions aren't available.
 talk: [

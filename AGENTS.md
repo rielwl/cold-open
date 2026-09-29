@@ -36,14 +36,16 @@ analysis" as easy reading). Append rows, then re-run `node tools/enrich.mjs`.
 - The JS is deliberately plain ES5-style (`var`, `function`, no modules) and
   matches the existing idiom: `$()` for `getElementById`, `esc()` on every
   string that reaches `innerHTML`, `try/catch` around every `localStorage` call.
+- The visual design is "Airmail", specified in `docs/airmail-design.md` (tokens,
+  type scale, spacing, component states, motion). Follow it for any UI change;
+  it's high fidelity. Styling hangs off attributes: `aria-pressed`,
+  `aria-selected`, `aria-expanded`, `data-mode`, and the clock's
+  `data-paused` / `data-final`.
 - Colours are tokens on `:root`, redefined for dark mode. New colours go in all
-  three token blocks, and the `@media print` block must keep outranking them.
+  three token blocks. Print shows only `.handout` (a separate element at the end
+  of `body`), black on white in every theme; keep the print block last.
 - The page must work at phone width (390px) with no sideways scroll, and with
   the clock bar on one row.
-- `window.claude` (the "Sharpen it / Reading notes" button, the optional shared
-  log, viewer downloads) only exists inside the Claude artifact viewer, which is
-  no longer where the app lives. That code is dormant on GitHub Pages. Everything
-  must work without it; feature-detect and degrade silently.
 - `index.html` is a complete document (doctype, charset, viewport). Keep it that
   way; a static host serves it as-is.
 - Never commit API keys or personal emails. The tools read `OPENALEX_API_KEY`
@@ -58,7 +60,8 @@ There are no automated tests. Serve the folder (`npx serve .` or
 `python -m http.server`), then in a browser: deal in both modes, start and stop
 the clock, re-deal mid-clock, pass with a reason, correct a rating with "fix
 this" (it should survive a reload), and preview the print handout
-(Paper mode, Print handout). Check dark mode and a 390px-wide window.
+(Paper mode, Print handout; or set `document.documentElement.dataset.preview =
+"handout"` to see it on screen). Check dark mode and a 390px-wide window.
 
 ## Deploying
 
