@@ -8,7 +8,7 @@ bigger deck, OpenAlex budget handling).
 - **Live page:** https://rielwl.github.io/cold-open/ (GitHub Pages)
 - **Repo:** https://github.com/rielwl/cold-open (public)
 - **Deck:** 5,502 subjects (3,054 talkable) and 4,163 papers (1,763 date-night
-  friendly); 20 angles, 12 reading lenses
+  friendly); 30 Sprint guiding questions in 5 groups, 12 reading lenses
 
 ## Done so far
 
@@ -43,6 +43,11 @@ export/import, `prompts.js`, AGENTS.md.
   searches $0.001, against about $0.10 a day without a key. All scripts now use
   lists and DOI batches, have 30-second timeouts, and read `OPENALEX_API_KEY`
   if it's set (a free key gives $1/day).
+
+**Third pass:** moved to GitHub Pages (public repo, history scrubbed of the
+personal email; the old private repo is `rielwl/cold-open-archive`). Sprint cards
+now get five guiding questions, one per talk card, instead of a single required
+angle.
 
 ## Picking it back up
 

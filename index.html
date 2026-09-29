@@ -100,6 +100,8 @@ button{font-family:var(--ui);cursor:pointer;color:inherit}
 .extract{margin:14px 0 0;font-size:16.5px;line-height:1.6;max-width:62ch}
 .angle{margin-top:20px;border-left:3px solid var(--flo);padding:2px 0 2px 15px}
 .angle .lbl{color:var(--flo)}
+.angle .qs{margin:8px 0 0;padding-left:22px;max-width:60ch}
+.angle .qs li{font-size:16px;line-height:1.5;margin-bottom:6px}
 .angle p{margin:5px 0 0;font-size:16px;line-height:1.5;max-width:60ch}
 .src{display:inline-flex;align-items:center;gap:6px;margin-top:18px;font-family:var(--ui);
   font-size:12.5px;font-weight:600;color:var(--blue);text-decoration:none;
@@ -281,7 +283,7 @@ button{font-family:var(--ui);cursor:pointer;color:inherit}
 (function(){
 "use strict";
 var SEEDS = window.SEEDS;
-var P = window.PROMPTS || { shapes:(SEEDS && SEEDS.shapes) || [], lenses:(SEEDS && SEEDS.lenses) || [], talk:[] };
+var P = window.PROMPTS || { questions:[], lenses:(SEEDS && SEEDS.lenses) || [], talk:[] };
 var $ = function(id){ return document.getElementById(id); };
 var KEY = "coldopen.v1";
 var BANDS = ["brief article", "moderate article", "substantial article", "very long article"];
@@ -370,7 +372,23 @@ function fixCount(){ return Object.keys(S.fixes.papers).length + Object.keys(S.f
 
 /* ---------- drawing ---------- */
 function pool(){ return S.mode === "sprint" ? SEEDS.topics : SEEDS.papers; }
-function deckFor(){ return S.mode === "sprint" ? P.shapes : P.lenses; }
+// Sprint: one guiding question per group, avoiding the ones on the last card.
+function sprintQuestions(){
+  var qs = P.questions.map(function(g){
+    var pool = g.q.filter(function(q){ return S.recent.indexOf(q) === -1; });
+    return pick(pool.length ? pool : g.q);
+  });
+  S.recent = qs.slice();
+  return { n:"Five questions", qs:qs };
+}
+// Paper: lenses that need measurements aren't dealt for theory, model or method papers.
+function paperLens(item){
+  var deck = P.lenses.filter(function(l){ return !(l.needs === "data" && item.e === 0); });
+  var shape = pick(deck);
+  for(var i=0; i<12 && S.recent.indexOf(shape.n) !== -1; i++) shape = pick(deck);
+  S.recent.unshift(shape.n); S.recent = S.recent.slice(0,4);
+  return shape;
+}
 function reason(k){
   for(var i=0; i<REASONS.length; i++) if(REASONS[i].k === k) return REASONS[i];
   return null;
@@ -405,11 +423,7 @@ function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 function draw(){
   stopClock();
   var item = pick(eligible());
-  // Lenses that need measurements aren't dealt for theory, model or method papers.
-  var deck = deckFor().filter(function(l){ return !(l.needs === "data" && item.e === 0); });
-  var shape = pick(deck);
-  for(var i=0; i<12 && S.recent.indexOf(shape.n) !== -1; i++) shape = pick(deck);
-  S.recent.unshift(shape.n); S.recent = S.recent.slice(0,4);
+  var shape = S.mode === "sprint" ? sprintQuestions() : paperLens(item);
   S.card = { item:item, shape:shape, ai:null, aiState:"idle", passing:false };
   renderCard(true);
 }
@@ -446,8 +460,14 @@ function renderCard(animate){
   h += '<p class="meta">' + meta + "</p>";
   h += renderRating(c);
   h += '<p class="extract">' + esc(it.x) + "</p>";
-  h += '<div class="angle"><span class="lbl">' + (isPaper ? "Read it for this" : "Your angle") + "</span>";
-  h += "<p>" + esc(c.shape.p) + "</p></div>";
+  if(isPaper){
+    h += '<div class="angle"><span class="lbl">Read it for this</span>';
+    h += "<p>" + esc(c.shape.p) + "</p></div>";
+  }else{
+    h += '<div class="angle"><span class="lbl">Guiding questions &mdash; one per talk card</span><ol class="qs">';
+    c.shape.qs.forEach(function(q){ h += "<li>" + esc(q) + "</li>"; });
+    h += "</ol></div>";
+  }
   h += '<div class="srcs">';
   if(!isPaper) h += link(it.u, "Open the article");
   else if(it.pdf){
@@ -620,7 +640,7 @@ function askAI(){
       + "Be concrete and specific to this paper. No preamble.";
   }else{
     p = "Someone has " + S.mins.sprint + " minutes to research this and then give a 5-minute talk, with no prior knowledge. "
-      + "They must take this angle: \"" + c.shape.n + " - " + c.shape.p + "\"\n\n"
+      + "Their talk answers these guiding questions, one per card:\n- " + c.shape.qs.join("\n- ") + "\n\n"
       + "SUBJECT: " + it.t + "\nBACKGROUND: " + it.x + "\n\n"
       + "Reply with JSON only: {\"angles\": [3-4 specific threads to chase in " + S.mins.sprint + " minutes, "
       + "each one sentence, each pointing at something concrete and findable], "
@@ -909,7 +929,8 @@ function easyCount(list, mode){
 $("foot").innerHTML = nf(SEEDS.topics.length) + " subjects (" + nf(easyCount(SEEDS.topics, "sprint"))
   + " talkable) and " + nf(SEEDS.papers.length) + " open-access papers ("
   + nf(easyCount(SEEDS.papers, "paper")) + " date-night friendly), with "
-  + P.shapes.length + " angles and " + P.lenses.length + " reading lenses.<br>"
+  + P.questions.reduce(function(n, g){ return n + g.q.length; }, 0) + " guiding questions and "
+  + P.lenses.length + " reading lenses.<br>"
   + "Subjects come from Wikipedia&rsquo;s unusual and featured articles and its science categories; "
   + "papers from eLife, PLOS, the Royal Society, PNAS, Psychological Science, "
   + "open-access humanities journals and others.";

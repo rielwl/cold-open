@@ -9,7 +9,8 @@ Read `README.md` for what the app is and `NEXT-STEPS.md` for where it stands.
   no dependencies. Keep it that way; don't introduce a bundler or framework.
 - `corpus.js` is the deck (~5 MB, `window.SEEDS`). It is generated, never
   hand-edited. Regenerate it with the pipeline in `tools/` (see README).
-- `prompts.js` holds the Sprint angles and Paper reading lenses as plain data.
+- `prompts.js` holds the Sprint guiding questions (five groups; a card gets one
+  from each, in order) and the Paper reading lenses, as plain data.
   Edit it directly; no rebuild needed. A lens with `needs:"data"` is only dealt
   for papers that report their own measurements (`e:1` in the deck).
 - `tools/paper_ratings.tsv` and `tools/topic_ratings.tsv` are hand-reviewed
