@@ -1,7 +1,7 @@
 import json, time, urllib.parse, urllib.request
 from concurrent.futures import ThreadPoolExecutor
 
-UA = {"User-Agent": "TopicSeedBuilder/1.0 (personal research app; contact 23545713+rielwl@users.noreply.github.com)"}
+UA = {"User-Agent": "TopicSeedBuilder/1.0 (https://github.com/rielwl/cold-open)"}
 API = "https://en.wikipedia.org/w/api.php?"
 
 def fetch(batch):

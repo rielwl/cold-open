@@ -13,10 +13,12 @@ import { fileURLToPath } from "node:url";
 
 const TOOLS = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.dirname(TOOLS);
-const MAIL = "23545713+rielwl@users.noreply.github.com";
+// Contact for the APIs' polite pools. Optional: set CONTACT_EMAIL to add yours.
+const MAIL = process.env.CONTACT_EMAIL || "";
+const MAILTO = MAIL ? "&mailto=" + encodeURIComponent(MAIL) : "";
 const KEY = process.env.OPENALEX_API_KEY ? "&api_key=" + process.env.OPENALEX_API_KEY : "";
 const CACHE = path.join(TOOLS, "extend_cache.json");
-const UA = { "User-Agent": "ColdOpen/1.1 (personal reading app; " + MAIL + ")" };
+const UA = { "User-Agent": "ColdOpen/1.1 (https://github.com/rielwl/cold-open" + (MAIL ? "; " + MAIL : "") + ")" };
 
 const TOPIC_TARGET = 420;   // per domain, counting what's already there
 const MIN_BYTES = 9000;     // was 12,000 in topup.py; 9k keeps more real articles
@@ -151,7 +153,7 @@ for(const q of PAPER_QUERIES){
       const j = await getJSON("https://api.openalex.org/works?per-page=200&sort=cited_by_count:desc&cursor=" + cursor
         + "&select=title,publication_year,cited_by_count,primary_location,best_oa_location,abstract_inverted_index,primary_topic,biblio,doi"
         + "&filter=" + q.filter + ",is_oa:true,type:article,has_abstract:true,cited_by_count:>25,from_publication_date:2004-01-01"
-        + "&mailto=" + MAIL + KEY);
+        + MAILTO + KEY);
       if(!j) break;
       res = cache.works[ck] = { next: j.meta && j.meta.next_cursor, results: j.results || [] };
       save();

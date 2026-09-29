@@ -16,7 +16,7 @@ Two modes:
 The reading, note-taking and annotation all happen on paper. The app only picks
 the subject and runs the clock.
 
-**Live page:** https://claude.ai/code/artifact/b6bdc9cf-860b-44f4-a357-964ee43bf47f
+**Live page:** https://rielwl.github.io/cold-open/ (GitHub Pages; redeploys on every push to `main`)
 
 Coming back to this after a while? Start with [NEXT-STEPS.md](NEXT-STEPS.md) —
 current state, what's unverified, known limits and the backlog. Coding agents:
@@ -30,10 +30,10 @@ It's a static page. Open `index.html` in a browser, or serve the folder:
 npx serve .              # or: python -m http.server 8000
 ```
 
-The only thing that doesn't work outside the Claude artifact viewer is the
-**Sharpen it / Reading notes** button, which asks Claude for threads to chase on
-that specific subject. It relies on `window.claude`, which only exists inside the
-viewer; everywhere else the button simply doesn't render.
+The page has some dormant code for running inside the Claude artifact viewer (a
+**Sharpen it / Reading notes** button that asks Claude for threads to chase). It
+relies on `window.claude`, which only exists there, so on GitHub Pages and
+locally the button simply doesn't render and exports use a normal download.
 
 ## How it's put together
 
@@ -133,17 +133,24 @@ about 70 calls and the humanities pull about 7. For big rebuilds, set a key:
 
 ```sh
 export OPENALEX_API_KEY=...        # PowerShell: $env:OPENALEX_API_KEY="..."
+export CONTACT_EMAIL=you@example.com   # optional; sent to OpenAlex/NCBI as the contact
 ```
+
+Never commit either value; they're read from the environment only.
 
 Anything new with no ratings row defaults to 1, so it stays off Date night and
 Talkable until someone labels it (see AGENTS.md) or fixes it in the app.
 
 ## Hosting
 
-The live copy is a Claude artifact, which is what gives it the Claude-backed
-"sharpen it" feature. The page is otherwise entirely static, so it will run from
-anywhere that serves files — including GitHub Pages, if the repo is ever made
-public and you don't mind losing that one button.
+GitHub Pages, deployed by `.github/workflows/pages.yml` on every push to `main`.
+It publishes only `index.html`, `corpus.js` and `prompts.js`; `tools/` stays in
+the repo. To deploy, just `git push`. The Actions tab shows each run, and
+**Run workflow** there redeploys by hand.
+
+An older copy still exists as a Claude artifact
+(https://claude.ai/code/artifact/b6bdc9cf-860b-44f4-a357-964ee43bf47f). It is no
+longer updated.
 
 Nothing here needs a database. The log is per-device by design; use export and
 import to carry it across.
