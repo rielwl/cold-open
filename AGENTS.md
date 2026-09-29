@@ -39,9 +39,14 @@ analysis" as easy reading). Append rows, then re-run `node tools/enrich.mjs`.
   three token blocks, and the `@media print` block must keep outranking them.
 - The page must work at phone width (390px) with no sideways scroll, and with
   the clock bar on one row.
-- `window.claude` (the "Sharpen it / Reading notes" button and the optional
-  shared log) only exists inside the Claude artifact viewer. Everything else
+- `window.claude` (the "Sharpen it / Reading notes" button, the optional shared
+  log, viewer downloads) only exists inside the Claude artifact viewer, which is
+  no longer where the app lives. That code is dormant on GitHub Pages. Everything
   must work without it; feature-detect and degrade silently.
+- `index.html` is a complete document (doctype, charset, viewport). Keep it that
+  way; a static host serves it as-is.
+- Never commit API keys or personal emails. The tools read `OPENALEX_API_KEY`
+  and `CONTACT_EMAIL` from the environment; the repo is public.
 - No network calls at runtime. The deck ships with the page.
 - Reading and annotation happen on paper. See the non-goals in NEXT-STEPS.md
   before adding a PDF viewer, slide editor, or debate mode.
@@ -56,7 +61,7 @@ this" (it should survive a reload), and preview the print handout
 
 ## Deploying
 
-The live copy is a Claude artifact (URL in README). Pushing to `main` does not
-update it; it has to be republished from a Claude session with that URL passed
-explicitly. The page is static, so any static host also works if the repo is
-ever made public, minus the Claude-only button.
+Push to `main`. `.github/workflows/pages.yml` deploys `index.html`, `corpus.js`
+and `prompts.js` to GitHub Pages at https://rielwl.github.io/cold-open/. No
+agent or CLI step is needed. If you add a file the page loads, add it to the
+workflow's copy step too.

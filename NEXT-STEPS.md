@@ -5,8 +5,8 @@ bigger deck, OpenAlex budget handling).
 
 ## State: working and in use
 
-- **Live page:** https://claude.ai/code/artifact/b6bdc9cf-860b-44f4-a357-964ee43bf47f
-- **Repo:** https://github.com/rielwl/cold-open (private, no Pages)
+- **Live page:** https://rielwl.github.io/cold-open/ (GitHub Pages)
+- **Repo:** https://github.com/rielwl/cold-open (public)
 - **Deck:** 5,502 subjects (3,054 talkable) and 4,163 papers (1,763 date-night
   friendly); 20 angles, 12 reading lenses
 
@@ -46,9 +46,8 @@ export/import, `prompts.js`, AGENTS.md.
 
 ## Picking it back up
 
-1. **To change the live page from a new Claude Code session**, pass the artifact
-   URL above explicitly. Publishing without it creates a second artifact. Pushing
-   to GitHub does not update it.
+1. **Deploying is `git push` to `main`.** GitHub Actions publishes the page; see
+   the Actions tab if it doesn't update. The old Claude artifact copy is frozen.
 2. **Usual update loop:** `node tools/extend.mjs` (optional, adds cards), label
    anything new (AGENTS.md), `node tools/enrich.mjs [fixes.json]`, commit.
 3. **Python isn't installed** on the Windows machine this was last worked on; the
@@ -58,9 +57,8 @@ export/import, `prompts.js`, AGENTS.md.
 
 ## Not yet verified
 
-- [ ] **Sharpen it / Reading notes** inside the Claude viewer. When it answers,
-      the handout uses its "watch for" and "talk about" points.
-- [ ] Copy invite inside the artifact iframe (falls back to showing the text).
+- [ ] Copy invite on a phone (clipboard permission varies; falls back to showing
+      the text to copy).
 - [ ] Print handout on a real printer (checked as an on-screen preview only).
 - [ ] The chime, audibly, at a phase change.
 
@@ -77,8 +75,11 @@ export/import, `prompts.js`, AGENTS.md.
    bilingualism journals rank high on citations). More history, philosophy and art
    history would need targeted journal lists rather than the field filter.
 4. **The log and fixes are per-device.** Export/import moves them. A live shared
-   log needs the artifact `db` capability (org-internal, may stop a partner opening
-   the link) or a real host with a database.
+   log would need a database behind the page (e.g. Supabase), which GitHub Pages
+   alone doesn't provide.
+5. **No Claude-backed "Reading notes"** on GitHub Pages. The handout falls back to
+   the fixed talk questions in `prompts.js`. Bringing it back would mean calling
+   an LLM API from the page, which needs a key and so a small backend.
 
 ## Backlog, roughly in order of value
 
